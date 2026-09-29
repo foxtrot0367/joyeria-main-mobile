@@ -58,7 +58,9 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (CartItem cartItem : cart.getItems()) {
-            Product product = cartItem.getProduct();
+            Product product = productRepository.findById(cartItem.getProduct().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
+            
             if (product.getStock() < cartItem.getQuantity()) {
                 throw new IllegalStateException("Stock insuficiente para: " + product.getName());
             }
@@ -175,11 +177,28 @@ public class OrderService {
     public OrderDTO updateOrderStatus(Long id, String status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
-        order.setStatus(Order.OrderStatus.valueOf(status));
-        if (status.equals("PAID")) {
+        
+        Order.OrderStatus newStatus = Order.OrderStatus.valueOf(status);
+        Order.OrderStatus currentStatus = order.getStatus();
+        
+        // Validar transiciones de estado permitidas
+        boolean validTransition = switch (currentStatus) {
+            case PENDING -> newStatus == Order.OrderStatus.PAID || newStatus == Order.OrderStatus.CANCELLED;
+            case PAID -> newStatus == Order.OrderStatus.PREPARING || newStatus == Order.OrderStatus.CANCELLED;
+            case PREPARING -> newStatus == Order.OrderStatus.SHIPPED || newStatus == Order.OrderStatus.CANCELLED;
+            case SHIPPED -> newStatus == Order.OrderStatus.DELIVERED;
+            case DELIVERED, CANCELLED -> false;
+        };
+        
+        if (!validTransition) {
+            throw new IllegalStateException("Transición de estado no permitida: " + currentStatus + " -> " + newStatus);
+        }
+        
+        order.setStatus(newStatus);
+        if (newStatus == Order.OrderStatus.PAID) {
             order.setPaymentStatus(Order.PaymentStatus.COMPLETED);
         }
-        if (status.equals("CANCELLED")) {
+        if (newStatus == Order.OrderStatus.CANCELLED) {
             for (OrderItem item : order.getItems()) {
                 Product product = item.getProduct();
                 if (product != null) {

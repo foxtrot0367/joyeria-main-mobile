@@ -29,9 +29,14 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        String token = tokenProvider.generateToken(authentication);
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        if (!user.getActive()) {
+            throw new IllegalStateException("Usuario desactivado");
+        }
+
+        String token = tokenProvider.generateToken(authentication);
 
         return AuthResponse.builder()
                 .token(token)
