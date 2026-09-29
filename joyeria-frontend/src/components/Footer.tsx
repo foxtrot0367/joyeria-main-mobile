@@ -4,10 +4,9 @@ import { Instagram, Facebook, Send, Phone, Mail, MapPin } from 'lucide-react'
 import { socialService } from '../services/misc.service'
 import { newsletterService } from '../services/misc.service'
 import type { SocialLink } from '../types'
-import Button from './Button'
 import Logo from './Logo'
 
-const socialIcons: Record<string, any> = { Instagram, Facebook, Send }
+const socialIcons: Record<string, React.ComponentType<{ size?: number | string }>> = { Instagram, Facebook, Send }
 
 export default function Footer() {
   const [socials, setSocials] = useState<SocialLink[]>([])

@@ -8,7 +8,20 @@ import Modal from '../../components/Modal'
 import UserNav from '../../components/UserNav'
 import Skeleton from '../../components/Skeleton'
 
-const empty = {
+interface AddressForm {
+  firstName: string
+  lastName: string
+  phone: string
+  addressLine1: string
+  addressLine2: string
+  city: string
+  department: string
+  postalCode: string
+  addressType: 'SHIPPING' | 'BILLING'
+  isDefault: boolean
+}
+
+const empty: AddressForm = {
   firstName: '', lastName: '', phone: '', addressLine1: '', addressLine2: '',
   city: '', department: '', postalCode: '', addressType: 'SHIPPING', isDefault: false,
 }
@@ -18,7 +31,7 @@ export default function Addresses() {
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Address | null>(null)
-  const [form, setForm] = useState<any>(empty)
+  const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
@@ -32,7 +45,22 @@ export default function Addresses() {
 
   const openNew = () => { setEditing(null); setForm(empty); setModal(true) }
 
-  const openEdit = (addr: Address) => { setEditing(addr); setForm({ ...addr }); setModal(true) }
+  const openEdit = (addr: Address) => {
+    setEditing(addr)
+    setForm({
+      firstName: addr.firstName || '',
+      lastName: addr.lastName || '',
+      phone: addr.phone || '',
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || '',
+      city: addr.city,
+      department: addr.department || '',
+      postalCode: addr.postalCode || '',
+      addressType: addr.addressType,
+      isDefault: addr.isDefault,
+    })
+    setModal(true)
+  }
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,8 +71,11 @@ export default function Addresses() {
       toast(editing ? 'Dirección actualizada' : 'Dirección guardada')
       setModal(false)
       load()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al guardar la dirección', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al guardar la dirección'
+      toast(message || 'Error al guardar la dirección', 'error')
     } finally { setSaving(false) }
   }
 
@@ -53,8 +84,11 @@ export default function Addresses() {
       await userService.deleteAddress(id)
       toast('Dirección eliminada', 'info')
       load()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'No se pudo eliminar', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'No se pudo eliminar'
+      toast(message || 'No se pudo eliminar', 'error')
     }
   }
 
@@ -126,7 +160,7 @@ export default function Addresses() {
               <input value={form.postalCode || ''} onChange={e => setForm({ ...form, postalCode: e.target.value })} className={input} /></div>
             <div>
               <label className="block text-xs font-medium text-foreground-faint mb-1">Tipo</label>
-              <select value={form.addressType} onChange={e => setForm({ ...form, addressType: e.target.value })} className={input}>
+              <select value={form.addressType} onChange={e => setForm({ ...form, addressType: e.target.value as 'SHIPPING' | 'BILLING' })} className={input}>
                 <option value="SHIPPING">Envío</option>
                 <option value="BILLING">Facturación</option>
               </select>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CreditCard, MapPin, ShoppingBag, Lock, Check } from 'lucide-react'
@@ -9,6 +9,7 @@ import { paymentService } from '../services/misc.service'
 import { couponService } from '../services/misc.service'
 import Button from '../components/Button'
 import { formatPrice } from '../utils/format'
+import type { Coupon } from '../types'
 
 export default function Checkout() {
   const { cart } = useCart()
@@ -17,7 +18,7 @@ export default function Checkout() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [coupon, setCoupon] = useState('')
-  const [couponApplied, setCouponApplied] = useState<any>(null)
+  const [couponApplied, setCouponApplied] = useState<Coupon | null>(null)
   const [shipping, setShipping] = useState<{ address: string; city: string; department: string; recipient: string; phone: string }>({ address: '', city: '', department: '', recipient: '', phone: '' })
   const [payment, setPayment] = useState<{ method: string; cardNumber: string; cardName: string; expiry: string; cvv: string }>({ method: 'card', cardNumber: '', cardName: '', expiry: '', cvv: '' })
 
@@ -41,8 +42,11 @@ export default function Checkout() {
 
       await paymentService.processPayment({ orderId: order.id, paymentMethod: payment.method, cardNumber: payment.cardNumber })
       navigate(`/pedido-confirmado/${order.orderNumber}`)
-    } catch (err: any) {
-      toast(err.response?.data?.message || `Error: ${err.response?.data?.data} ${err.response?.data?.message || ''}`, 'error')
+    } catch (err: unknown) {
+      const response = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string; data?: string } } }).response?.data
+        : undefined
+      toast(response?.message || `Error: ${response?.data || ''} ${response?.message || ''}`, 'error')
     } finally { setLoading(false) }
   }
 

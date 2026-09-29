@@ -1,8 +1,19 @@
 import api from './api'
 import type { ApiResponse, Order, PagedResponse } from '../types'
 
+export interface OrderCreateRequest {
+  shippingAddress: string
+  shippingCity: string
+  shippingDepartment?: string
+  recipientName?: string
+  phone?: string
+  paymentMethod: string
+  couponCode?: string
+  notes?: string
+}
+
 export const orderService = {
-  async createOrder(orderData: any): Promise<Order> {
+  async createOrder(orderData: OrderCreateRequest): Promise<Order> {
     const { data } = await api.post<ApiResponse<Order>>('/orders', orderData)
     return data.data
   },

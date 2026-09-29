@@ -20,7 +20,7 @@ export default function Catalog() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [materials, setMaterials] = useState<Material[]>([])
-  const [meta, setMeta] = useState({ page: 0, totalPages: 1, totalElements: 0 } as any)
+  const [meta, setMeta] = useState<{ page: number; totalPages: number; totalElements: number }>({ page: 0, totalPages: 1, totalElements: 0 })
   const [loading, setLoading] = useState(true)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [quickView, setQuickView] = useState<Product | null>(null)
@@ -46,7 +46,7 @@ export default function Catalog() {
 
   useEffect(() => {
     setLoading(true)
-    const params: Record<string, any> = { page, size: 12, sort, direction: dir }
+    const params: Record<string, string | number | boolean> = { page, size: 12, sort, direction: dir }
     if (query) params.q = query
     if (category) params.categoryId = category
     if (material) params.materialId = material

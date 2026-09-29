@@ -7,7 +7,7 @@ import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
 
-const empty = { name: '', url: '', icon: 'instagram', active: true, sortOrder: 0 }
+const empty: { name: string; url: string; icon: string; active: boolean; sortOrder: number } = { name: '', url: '', icon: 'instagram', active: true, sortOrder: 0 }
 
 const iconOptions = ['instagram', 'facebook', 'twitter', 'youtube', 'linkedin', 'tiktok', 'whatsapp']
 
@@ -16,7 +16,7 @@ export default function AdminSocialLinks() {
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<SocialLink | null>(null)
-  const [form, setForm] = useState<any>(empty)
+  const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
@@ -29,7 +29,11 @@ export default function AdminSocialLinks() {
   useEffect(() => { load() }, [])
 
   const openNew = () => { setEditing(null); setForm(empty); setModal(true) }
-  const openEdit = (l: SocialLink) => { setEditing(l); setForm({ ...l }); setModal(true) }
+  const openEdit = (l: SocialLink) => {
+    setEditing(l)
+    setForm({ name: l.name, url: l.url, icon: l.icon || 'instagram', active: l.active, sortOrder: l.sortOrder })
+    setModal(true)
+  }
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,15 +43,23 @@ export default function AdminSocialLinks() {
       else await adminService.createSocialLink(form)
       toast(editing ? 'Enlace actualizado' : 'Enlace creado')
       setModal(false); load()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al guardar', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al guardar'
+      toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
 
   const remove = async (id: number) => {
     if (!window.confirm('¿Eliminar este enlace?')) return
     try { await adminService.deleteSocialLink(id); toast('Enlace eliminado', 'info'); load() }
-    catch (err: any) { toast(err.response?.data?.message || 'No se pudo eliminar', 'error') }
+    catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'No se pudo eliminar'
+      toast(message || 'No se pudo eliminar', 'error')
+    }
   }
 
   const input = 'w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition'

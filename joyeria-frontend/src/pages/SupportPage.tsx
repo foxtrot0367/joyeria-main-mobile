@@ -20,8 +20,11 @@ export default function SupportPage() {
       await userService.createSupportTicket(ticket)
       setSent(true)
       toast('Ticket creado: te contactaremos pronto')
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al enviar el ticket', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al enviar el ticket'
+      toast(message || 'Error al enviar el ticket', 'error')
     } finally { setLoading(false) }
   }
 

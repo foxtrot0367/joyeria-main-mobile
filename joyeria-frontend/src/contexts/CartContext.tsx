@@ -34,23 +34,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => { refreshCart() }, [refreshCart])
 
   const addItem = async (productId: number, quantity = 1) => {
-    const data = await cartService.addItem(productId, quantity)
-    setCart(data)
+    try {
+      const data = await cartService.addItem(productId, quantity)
+      setCart(data)
+    } catch (err) {
+      console.error('Error al agregar al carrito:', err)
+      throw err
+    }
   }
 
   const updateQuantity = async (itemId: number, quantity: number) => {
-    const data = await cartService.updateQuantity(itemId, quantity)
-    setCart(data)
+    try {
+      const data = await cartService.updateQuantity(itemId, quantity)
+      setCart(data)
+    } catch (err) {
+      console.error('Error al actualizar cantidad:', err)
+      throw err
+    }
   }
 
   const removeItem = async (itemId: number) => {
-    const data = await cartService.removeItem(itemId)
-    setCart(data)
+    try {
+      const data = await cartService.removeItem(itemId)
+      setCart(data)
+    } catch (err) {
+      console.error('Error al eliminar item:', err)
+      throw err
+    }
   }
 
   const clearCart = async () => {
-    await cartService.clearCart()
-    setCart(null)
+    try {
+      await cartService.clearCart()
+      setCart(null)
+    } catch (err) {
+      console.error('Error al vaciar carrito:', err)
+      throw err
+    }
   }
 
   return (

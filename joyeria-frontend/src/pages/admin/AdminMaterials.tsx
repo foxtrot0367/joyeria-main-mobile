@@ -7,14 +7,14 @@ import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
 
-const empty = { name: '', description: '', image: '', active: true }
+const empty: { name: string; description: string; image: string; active: boolean } = { name: '', description: '', image: '', active: true }
 
 export default function AdminMaterials() {
   const [materials, setMaterials] = useState<Material[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Material | null>(null)
-  const [form, setForm] = useState<any>(empty)
+  const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
@@ -27,7 +27,11 @@ export default function AdminMaterials() {
   useEffect(() => { load() }, [])
 
   const openNew = () => { setEditing(null); setForm(empty); setModal(true) }
-  const openEdit = (m: Material) => { setEditing(m); setForm({ ...m }); setModal(true) }
+  const openEdit = (m: Material) => {
+    setEditing(m)
+    setForm({ name: m.name, description: m.description || '', image: m.image || '', active: m.active })
+    setModal(true)
+  }
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,15 +41,23 @@ export default function AdminMaterials() {
       else await adminService.createMaterial(form)
       toast(editing ? 'Material actualizado' : 'Material creado')
       setModal(false); load()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al guardar', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al guardar'
+      toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
 
   const remove = async (id: number) => {
     if (!window.confirm('¿Eliminar este material?')) return
     try { await adminService.deleteMaterial(id); toast('Material eliminado', 'info'); load() }
-    catch (err: any) { toast(err.response?.data?.message || 'No se pudo eliminar', 'error') }
+    catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'No se pudo eliminar'
+      toast(message || 'No se pudo eliminar', 'error')
+    }
   }
 
   const input = 'w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition'

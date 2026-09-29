@@ -7,14 +7,14 @@ import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
 
-const empty = { name: '', description: '', displayOrder: 0, image: '', active: true }
+const empty: { name: string; description: string; displayOrder: number; image: string; active: boolean } = { name: '', description: '', displayOrder: 0, image: '', active: true }
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Category | null>(null)
-  const [form, setForm] = useState<any>(empty)
+  const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
@@ -27,7 +27,11 @@ export default function AdminCategories() {
   useEffect(() => { load() }, [])
 
   const openNew = () => { setEditing(null); setForm(empty); setModal(true) }
-  const openEdit = (c: Category) => { setEditing(c); setForm({ ...c }); setModal(true) }
+  const openEdit = (c: Category) => {
+    setEditing(c)
+    setForm({ name: c.name, description: c.description || '', displayOrder: c.displayOrder || 0, image: c.image || '', active: c.active })
+    setModal(true)
+  }
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,15 +41,23 @@ export default function AdminCategories() {
       else await adminService.createCategory(form)
       toast(editing ? 'Categoría actualizada' : 'Categoría creada')
       setModal(false); load()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al guardar', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al guardar'
+      toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
 
   const remove = async (id: number) => {
     if (!window.confirm('¿Eliminar esta categoría?')) return
     try { await adminService.deleteCategory(id); toast('Categoría eliminada', 'info'); load() }
-    catch (err: any) { toast(err.response?.data?.message || 'No se pudo eliminar', 'error') }
+    catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'No se pudo eliminar'
+      toast(message || 'No se pudo eliminar', 'error')
+    }
   }
 
   const input = 'w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition'

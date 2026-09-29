@@ -5,9 +5,10 @@ import { useToast } from '../../contexts/ToastContext'
 import Button from '../../components/Button'
 import UserNav from '../../components/UserNav'
 import Skeleton from '../../components/Skeleton'
+import type { User as UserType } from '../../types'
 
 export default function Profile() {
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<UserType | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -20,12 +21,16 @@ export default function Profile() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!profile) return
     setSaving(true)
     try {
       await userService.updateProfile({ firstName: profile.firstName, lastName: profile.lastName, phone: profile.phone })
       toast('Perfil actualizado')
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al actualizar el perfil', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al actualizar el perfil'
+      toast(message || 'Error al actualizar el perfil', 'error')
     } finally { setSaving(false) }
   }
 
@@ -37,12 +42,16 @@ export default function Profile() {
       await userService.changePassword(passwords)
       toast('Contraseña cambiada exitosamente')
       setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' })
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al cambiar la contraseña', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al cambiar la contraseña'
+      toast(message || 'Error al cambiar la contraseña', 'error')
     } finally { setChangingPassword(false) }
   }
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-10"><Skeleton className="h-64" /></div>
+  if (!profile) return <div className="max-w-4xl mx-auto px-4 py-10"><Skeleton className="h-64" /></div>
 
   const input = 'w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition'
 

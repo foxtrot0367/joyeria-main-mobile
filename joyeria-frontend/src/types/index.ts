@@ -222,7 +222,7 @@ export interface DashboardStats {
   totalCustomers?: number
   lowStockProducts?: number
   outOfStockProducts?: number
-  topSellingProducts?: Array<Record<string, any>>
-  recentOrders?: Array<Record<string, any>>
+  topSellingProducts?: Array<{ id: number; name: string; soldCount: number }>
+  recentOrders?: Array<{ id: number; orderNumber: string; total: number; status: string }>
   ordersByStatus?: Record<string, number>
 }

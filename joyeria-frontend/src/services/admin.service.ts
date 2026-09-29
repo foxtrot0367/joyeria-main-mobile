@@ -4,6 +4,51 @@ import type {
   PagedResponse, DashboardStats, Coupon, SocialLink, SupportTicket,
 } from '../types'
 
+export interface ProductCreateRequest {
+  name: string
+  slug?: string
+  description?: string
+  price: number
+  comparePrice?: number | null
+  sku: string
+  stock: number
+  categoryId?: number | null
+  materialIds?: number[]
+  images?: Array<{ url: string; alt?: string; isPrimary: boolean; sortOrder: number }>
+}
+
+export interface CategoryCreateRequest {
+  name: string
+  slug?: string
+  description?: string
+  displayOrder?: number
+  image?: string
+}
+
+export interface MaterialCreateRequest {
+  name: string
+  slug?: string
+  description?: string
+  image?: string
+}
+
+export interface CouponCreateRequest {
+  code: string
+  description?: string
+  discountType: 'PERCENTAGE' | 'FIXED'
+  discountValue: number
+  minAmount?: number | null
+  maxUses?: number | null
+  validFrom?: string | null
+  validUntil?: string | null
+}
+
+export interface SocialLinkCreateRequest {
+  name: string
+  url: string
+  icon?: string
+}
+
 export const adminService = {
   // Dashboard
   async getStats(): Promise<DashboardStats> {
@@ -16,11 +61,11 @@ export const adminService = {
     const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/products', { params: { page, size } })
     return data.data
   },
-  async createProduct(product: any): Promise<Product> {
+  async createProduct(product: ProductCreateRequest): Promise<Product> {
     const { data } = await api.post<ApiResponse<Product>>('/admin/products', product)
     return data.data
   },
-  async updateProduct(id: number, product: any): Promise<Product> {
+  async updateProduct(id: number, product: ProductCreateRequest): Promise<Product> {
     const { data } = await api.put<ApiResponse<Product>>(`/admin/products/${id}`, product)
     return data.data
   },
@@ -33,11 +78,11 @@ export const adminService = {
     const { data } = await api.get<ApiResponse<Category[]>>('/categories')
     return data.data
   },
-  async createCategory(category: any): Promise<Category> {
+  async createCategory(category: CategoryCreateRequest): Promise<Category> {
     const { data } = await api.post<ApiResponse<Category>>('/categories', category)
     return data.data
   },
-  async updateCategory(id: number, category: any): Promise<Category> {
+  async updateCategory(id: number, category: CategoryCreateRequest): Promise<Category> {
     const { data } = await api.put<ApiResponse<Category>>(`/categories/${id}`, category)
     return data.data
   },
@@ -50,11 +95,11 @@ export const adminService = {
     const { data } = await api.get<ApiResponse<Material[]>>('/materials')
     return data.data
   },
-  async createMaterial(material: any): Promise<Material> {
+  async createMaterial(material: MaterialCreateRequest): Promise<Material> {
     const { data } = await api.post<ApiResponse<Material>>('/materials', material)
     return data.data
   },
-  async updateMaterial(id: number, material: any): Promise<Material> {
+  async updateMaterial(id: number, material: MaterialCreateRequest): Promise<Material> {
     const { data } = await api.put<ApiResponse<Material>>(`/materials/${id}`, material)
     return data.data
   },
@@ -108,11 +153,11 @@ export const adminService = {
     const { data } = await api.get<ApiResponse<Coupon[]>>('/coupons')
     return data.data
   },
-  async createCoupon(coupon: any): Promise<Coupon> {
+  async createCoupon(coupon: CouponCreateRequest): Promise<Coupon> {
     const { data } = await api.post<ApiResponse<Coupon>>('/coupons', coupon)
     return data.data
   },
-  async updateCoupon(id: number, coupon: any): Promise<Coupon> {
+  async updateCoupon(id: number, coupon: CouponCreateRequest): Promise<Coupon> {
     const { data } = await api.put<ApiResponse<Coupon>>(`/coupons/${id}`, coupon)
     return data.data
   },
@@ -125,11 +170,11 @@ export const adminService = {
     const { data } = await api.get<ApiResponse<SocialLink[]>>('/social-links/admin')
     return data.data
   },
-  async createSocialLink(link: any): Promise<SocialLink> {
+  async createSocialLink(link: SocialLinkCreateRequest): Promise<SocialLink> {
     const { data } = await api.post<ApiResponse<SocialLink>>('/social-links', link)
     return data.data
   },
-  async updateSocialLink(id: number, link: any): Promise<SocialLink> {
+  async updateSocialLink(id: number, link: SocialLinkCreateRequest): Promise<SocialLink> {
     const { data } = await api.put<ApiResponse<SocialLink>>(`/social-links/${id}`, link)
     return data.data
   },

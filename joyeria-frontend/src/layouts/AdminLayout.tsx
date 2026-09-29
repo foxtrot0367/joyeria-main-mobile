@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Package, FolderTree, Gem, ShoppingCart, Users, Star, LifeBuoy, Ticket, Link2, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, FolderTree, Gem, ShoppingCart, Users, Star, LifeBuoy, Ticket, Link2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const menu = [

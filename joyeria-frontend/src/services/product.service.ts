@@ -1,8 +1,19 @@
 import api from './api'
 import type { ApiResponse, Product, PagedResponse } from '../types'
 
+export interface ProductSearchParams {
+  page?: number
+  size?: number
+  category?: string
+  material?: string
+  minPrice?: number
+  maxPrice?: number
+  search?: string
+  sort?: string
+}
+
 export const productService = {
-  async getAll(params: Record<string, any> = {}): Promise<PagedResponse<Product>> {
+  async getAll(params: ProductSearchParams = {}): Promise<PagedResponse<Product>> {
     const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/products', { params })
     return data.data
   },
@@ -37,7 +48,7 @@ export const productService = {
     return data.data
   },
 
-  async search(query: string, params: Record<string, any> = {}): Promise<PagedResponse<Product>> {
+  async search(query: string, params: ProductSearchParams = {}): Promise<PagedResponse<Product>> {
     const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/search', { params: { q: query, ...params } })
     return data.data
   },
