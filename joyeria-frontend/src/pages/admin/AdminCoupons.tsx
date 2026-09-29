@@ -8,7 +8,10 @@ import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
 import { formatDate, formatPrice } from '../../utils/format'
 
-const empty = {
+const empty: {
+  code: string; description: string; discountType: 'PERCENTAGE' | 'FIXED'; discountValue: string
+  minAmount: string; maxUses: string; validFrom: string; validUntil: string; active: boolean
+} = {
   code: '', description: '', discountType: 'PERCENTAGE', discountValue: '',
   minAmount: '', maxUses: '', validFrom: '', validUntil: '', active: true,
 }
@@ -18,7 +21,7 @@ export default function AdminCoupons() {
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Coupon | null>(null)
-  const [form, setForm] = useState<any>(empty)
+  const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
@@ -35,7 +38,7 @@ export default function AdminCoupons() {
   const openEdit = (c: Coupon) => {
     setEditing(c)
     setForm({
-      code: c.code, description: c.description || '', discountType: c.discountType,
+      code: c.code, description: c.description || '', discountType: c.discountType as 'PERCENTAGE' | 'FIXED',
       discountValue: String(c.discountValue), minAmount: c.minAmount ? String(c.minAmount) : '',
       maxUses: c.maxUses ? String(c.maxUses) : '',
       validFrom: c.validFrom ? c.validFrom.slice(0, 16) : '',
@@ -60,15 +63,23 @@ export default function AdminCoupons() {
       else await adminService.createCoupon(payload)
       toast(editing ? 'Cupón actualizado' : 'Cupón creado')
       setModal(false); load()
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al guardar', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al guardar'
+      toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
 
   const remove = async (id: number) => {
     if (!window.confirm('¿Eliminar este cupón?')) return
     try { await adminService.deleteCoupon(id); toast('Cupón eliminado', 'info'); load() }
-    catch (err: any) { toast(err.response?.data?.message || 'No se pudo eliminar', 'error') }
+    catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'No se pudo eliminar'
+      toast(message || 'No se pudo eliminar', 'error')
+    }
   }
 
   const input = 'w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition'
@@ -148,7 +159,7 @@ export default function AdminCoupons() {
             </div>
             <div>
               <label className={label}>Tipo de descuento</label>
-              <select value={form.discountType} onChange={e => setForm({ ...form, discountType: e.target.value })} className={input}>
+              <select value={form.discountType} onChange={e => setForm({ ...form, discountType: e.target.value as 'PERCENTAGE' | 'FIXED' })} className={input}>
                 <option value="PERCENTAGE">Porcentaje (%)</option>
                 <option value="FIXED">Monto fijo ($)</option>
               </select>

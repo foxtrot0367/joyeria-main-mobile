@@ -26,7 +26,12 @@ export default function AdminUsers() {
 
   const changeRole = async (id: number, role: string) => {
     try { await adminService.updateUserRole(id, role); toast('Rol actualizado'); load() }
-    catch (err: any) { toast(err.response?.data?.message || 'Error al actualizar rol', 'error') }
+    catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al actualizar rol'
+      toast(message || 'Error al actualizar rol', 'error')
+    }
   }
 
   const toggleActive = async (user: User) => {
@@ -34,7 +39,12 @@ export default function AdminUsers() {
       await adminService.toggleUserActive(user.id)
       toast(user.active ? 'Usuario desactivado' : 'Usuario activado', 'info')
       load()
-    } catch (err: any) { toast(err.response?.data?.message || 'Error al actualizar', 'error') }
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al actualizar'
+      toast(message || 'Error al actualizar', 'error')
+    }
   }
 
   const input = 'px-2 py-1 rounded-lg border border-line text-xs outline-none focus:border-[#C9A227] bg-surface'

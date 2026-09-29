@@ -19,8 +19,11 @@ export default function ForgotPassword() {
       const message = await authService.forgotPassword(email)
       setSent(true)
       toast(message)
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al enviar la solicitud', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al enviar la solicitud'
+      toast(message || 'Error al enviar la solicitud', 'error')
     } finally { setLoading(false) }
   }
 

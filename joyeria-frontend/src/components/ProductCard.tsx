@@ -37,7 +37,7 @@ export default function ProductCard({ product, onAddToCart, onQuickView, onToggl
           {img2 && (
             <img src={img2} alt="" aria-hidden loading="lazy" decoding="async"
               className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              onError={e => { (e as any).target.style.display = 'none' }} />
+              onError={e => { e.currentTarget.style.display = 'none' }} />
           )}
         </Link>
 

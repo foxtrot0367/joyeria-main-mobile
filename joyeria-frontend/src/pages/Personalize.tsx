@@ -66,7 +66,7 @@ export default function Personalize() {
         const custom = cats.filter(c => /personal|medida|regalo|historia/i.test(c.name)).map(c => c.id)
         const ids = custom.length ? custom : [7, 8]
         const results = await Promise.all(
-          ids.map(id => productService.getAll({ category: id, size: 12 }).then(r => r.content).catch(() => []) as Promise<Product[]>)
+          ids.map(id => productService.getAll({ category: String(id), size: 12 }).then(r => r.content).catch(() => []) as Promise<Product[]>)
         )
         if (cancelled) return
         const all = results.flat().filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
@@ -117,7 +117,6 @@ export default function Personalize() {
   }
 
   const canSubmit = !!product
-  const fadeUp = { hidden: { opacity: 0, y: 26 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55 } } }
 
   return (
     <div>

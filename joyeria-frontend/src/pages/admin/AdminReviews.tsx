@@ -25,7 +25,12 @@ export default function AdminReviews() {
       await adminService.moderateReview(id, status)
       toast(status === 'APPROVED' ? 'Reseña aprobada' : 'Reseña rechazada', status === 'APPROVED' ? 'success' : 'info')
       load()
-    } catch (err: any) { toast(err.response?.data?.message || 'Error al moderar', 'error') }
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al moderar'
+      toast(message || 'Error al moderar', 'error')
+    }
   }
 
   if (loading) return <Skeleton className="h-80" />

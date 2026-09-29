@@ -1,5 +1,43 @@
 import api from './api'
-import type { ApiResponse, User, Address, Review, SupportTicket, PagedResponse } from '../types'
+import type { ApiResponse, User, Address, Review, SupportTicket, PagedResponse, Product } from '../types'
+
+export interface UserUpdateRequest {
+  firstName?: string
+  lastName?: string
+  email?: string
+  phone?: string
+}
+
+export interface PasswordChangeRequest {
+  currentPassword: string
+  newPassword: string
+}
+
+export interface AddressCreateRequest {
+  firstName?: string
+  lastName?: string
+  phone?: string
+  addressLine1: string
+  addressLine2?: string
+  city: string
+  department?: string
+  postalCode?: string
+  addressType: 'SHIPPING' | 'BILLING'
+  isDefault: boolean
+}
+
+export interface ReviewCreateRequest {
+  productId: number
+  rating: number
+  title?: string
+  comment?: string
+}
+
+export interface SupportTicketCreateRequest {
+  subject: string
+  message: string
+  category?: string
+}
 
 export const userService = {
   async getProfile(): Promise<User> {
@@ -7,12 +45,12 @@ export const userService = {
     return data.data
   },
 
-  async updateProfile(userData: any): Promise<User> {
+  async updateProfile(userData: UserUpdateRequest): Promise<User> {
     const { data } = await api.put<ApiResponse<User>>('/users/me', userData)
     return data.data
   },
 
-  async changePassword(passwords: any): Promise<void> {
+  async changePassword(passwords: PasswordChangeRequest): Promise<void> {
     await api.put('/users/me/password', passwords)
   },
 
@@ -21,12 +59,12 @@ export const userService = {
     return data.data
   },
 
-  async createAddress(address: any): Promise<Address> {
+  async createAddress(address: AddressCreateRequest): Promise<Address> {
     const { data } = await api.post<ApiResponse<Address>>('/addresses', address)
     return data.data
   },
 
-  async updateAddress(id: number, address: any): Promise<Address> {
+  async updateAddress(id: number, address: AddressCreateRequest): Promise<Address> {
     const { data } = await api.put<ApiResponse<Address>>(`/addresses/${id}`, address)
     return data.data
   },
@@ -45,12 +83,12 @@ export const userService = {
     return data.data
   },
 
-  async getFavorites(page = 0, size = 20): Promise<PagedResponse<any>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<any>>>('/favorites', { params: { page, size } })
+  async getFavorites(page = 0, size = 20): Promise<PagedResponse<Product>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/favorites', { params: { page, size } })
     return data.data
   },
 
-  async submitReview(review: any): Promise<Review> {
+  async submitReview(review: ReviewCreateRequest): Promise<Review> {
     const { data } = await api.post<ApiResponse<Review>>('/reviews', review)
     return data.data
   },
@@ -65,7 +103,7 @@ export const userService = {
     return data.data
   },
 
-  async createSupportTicket(ticket: any): Promise<SupportTicket> {
+  async createSupportTicket(ticket: SupportTicketCreateRequest): Promise<SupportTicket> {
     const { data } = await api.post<ApiResponse<SupportTicket>>('/support/tickets', ticket)
     return data.data
   },

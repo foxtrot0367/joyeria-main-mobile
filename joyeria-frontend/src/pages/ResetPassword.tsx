@@ -26,8 +26,11 @@ export default function ResetPassword() {
       const message = await authService.resetPassword(token, newPassword)
       setDone(true)
       toast(message)
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'El enlace es inválido o expiró', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'El enlace es inválido o expiró'
+      toast(message || 'El enlace es inválido o expiró', 'error')
     } finally { setLoading(false) }
   }
 

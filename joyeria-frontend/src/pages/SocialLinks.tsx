@@ -5,7 +5,7 @@ import { socialService } from '../services/misc.service'
 import type { SocialLink } from '../types'
 import Skeleton from '../components/Skeleton'
 
-const icons: Record<string, any> = {
+const icons: Record<string, React.ComponentType<{ size?: number | string }>> = {
   instagram: Instagram, facebook: Facebook, twitter: Twitter, youtube: Youtube, linkedin: Linkedin,
 }
 

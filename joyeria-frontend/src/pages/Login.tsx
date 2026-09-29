@@ -22,8 +22,11 @@ export default function Login() {
       await login(email, password)
       toast('¡Bienvenido de nuevo!')
       navigate('/')
-    } catch (err: any) {
-      toast(err.response?.data?.message || 'Error al iniciar sesión', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'Error al iniciar sesión'
+      toast(message || 'Error al iniciar sesión', 'error')
     } finally { setLoading(false) }
   }
 

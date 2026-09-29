@@ -11,7 +11,6 @@ import type { Product, Review } from '../types'
 import ProductCard from '../components/ProductCard'
 import Price from '../components/Price'
 import ReviewCard from '../components/ReviewCard'
-import { formatPrice } from '../utils/format'
 import Skeleton from '../components/Skeleton'
 
 export default function ProductDetail() {
@@ -22,7 +21,7 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [activeImage, setActiveImage] = useState(0)
-  const [quantity, setQuantity] = useState(1)
+  const [quantity] = useState(1)
   const [isFavorite, setIsFavorite] = useState(false)
   const { addItem } = useCart()
   const { isAuthenticated } = useAuth()

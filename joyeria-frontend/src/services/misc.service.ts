@@ -1,6 +1,24 @@
 import api from './api'
 import type { ApiResponse, SocialLink, Coupon } from '../types'
 
+export interface PaymentRequest {
+  orderId: number
+  paymentMethod: string
+  cardNumber?: string
+  cardName?: string
+  expiry?: string
+  cvv?: string
+}
+
+export interface PaymentResponse {
+  id: number
+  orderId: number
+  amount: number
+  method: string
+  status: string
+  transactionId?: string
+}
+
 export const socialService = {
   async getAll(): Promise<SocialLink[]> {
     const { data } = await api.get<ApiResponse<SocialLink[]>>('/social-links')
@@ -23,8 +41,8 @@ export const couponService = {
 }
 
 export const paymentService = {
-  async processPayment(paymentData: any): Promise<any> {
-    const { data } = await api.post<ApiResponse<any>>('/payments/process', paymentData)
+  async processPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
+    const { data } = await api.post<ApiResponse<PaymentResponse>>('/payments/process', paymentData)
     return data.data
   },
 }

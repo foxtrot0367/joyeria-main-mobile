@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, User, Phone } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import Button from '../components/Button'
 
 export default function Register() {
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' })
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
   const { toast } = useToast()
@@ -24,9 +24,12 @@ export default function Register() {
       await register(form)
       toast('¡Cuenta creada exitosamente!')
       navigate('/')
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.data?.email || 'Error al registrarse'
-      toast(msg, 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string; data?: { email?: string } } } }).response?.data?.message
+          || (err as { response?: { data?: { data?: { email?: string } } } }).response?.data?.data?.email
+        : 'Error al registrarse'
+      toast(message || 'Error al registrarse', 'error')
     } finally { setLoading(false) }
   }
 

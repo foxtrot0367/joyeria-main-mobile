@@ -25,7 +25,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
-  const [form, setForm] = useState<any>(empty)
+  const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
 
@@ -73,15 +73,24 @@ export default function AdminProducts() {
       toast(editing ? 'Producto actualizado' : 'Producto creado')
       setModal(false)
       reload()
-    } catch (err: any) {
-      toast(err.response?.data?.message || err.response?.data?.data || 'Error al guardar', 'error')
+    } catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string; data?: string } } }).response?.data?.message
+          || (err as { response?: { data?: { data?: string } } }).response?.data?.data
+        : 'Error al guardar'
+      toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
 
   const remove = async (id: number) => {
     if (!window.confirm('¿Eliminar este producto?')) return
     try { await adminService.deleteProduct(id); toast('Producto eliminado', 'info'); reload() }
-    catch (err: any) { toast(err.response?.data?.message || 'No se pudo eliminar', 'error') }
+    catch (err: unknown) {
+      const message = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : 'No se pudo eliminar'
+      toast(message || 'No se pudo eliminar', 'error')
+    }
   }
 
   const reload = async () => {
@@ -90,9 +99,9 @@ export default function AdminProducts() {
   }
 
   const toggleMaterial = (id: number) => {
-    setForm((f: any) => ({
+    setForm((f) => ({
       ...f,
-      materialIds: f.materialIds.includes(id) ? f.materialIds.filter((m: number) => m !== id) : [...f.materialIds, id],
+      materialIds: f.materialIds.includes(id) ? f.materialIds.filter((m) => m !== id) : [...f.materialIds, id],
     }))
   }
 
@@ -247,12 +256,12 @@ export default function AdminProducts() {
               </div>
             </div>
             <div className="col-span-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-foreground-muted">
-              {[
-                { key: 'featured', label: 'Destacado' },
-                { key: 'isNew', label: 'Nuevo' },
-                { key: 'bestSeller', label: 'Más vendido' },
-                { key: 'active', label: 'Activo' },
-              ].map(t => (
+              {([
+                { key: 'featured' as const, label: 'Destacado' },
+                { key: 'isNew' as const, label: 'Nuevo' },
+                { key: 'bestSeller' as const, label: 'Más vendido' },
+                { key: 'active' as const, label: 'Activo' },
+              ]).map(t => (
                 <label key={t.key} className="flex items-center gap-2 bg-background-warm px-3 py-2 rounded-lg">
                   <input type="checkbox" checked={!!form[t.key]} onChange={e => setForm({ ...form, [t.key]: e.target.checked })} className="accent-[#C9A227]" />
                   {t.label}
