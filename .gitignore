@@ -1,0 +1,23 @@
+﻿# ---- dependencias / build ----
+node_modules/
+dist/
+target/
+*.tsbuildinfo
+
+# ---- secretos (nunca) ----
+.env
+.env.*
+!.env.example
+application-local.yml
+*.pem
+*.key
+
+# ---- logs / OS ----
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+
+# ---- IDE ----
+.idea/
+.vscode/
