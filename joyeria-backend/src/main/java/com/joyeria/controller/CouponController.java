@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/coupons")
 @RequiredArgsConstructor
-@CrossOrigin
 public class CouponController {
 
     private final CouponService couponService;

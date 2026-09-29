@@ -41,6 +41,17 @@ public class CouponService {
         return mapToDTO(coupon);
     }
 
+    public CouponDTO validateCouponForOrder(String code, java.math.BigDecimal orderSubtotal) {
+        Coupon coupon = validateCoupon(code) != null ? couponRepository.findByCodeAndActiveTrue(code).orElse(null) : null;
+        if (coupon == null) {
+            throw new ResourceNotFoundException("Cupón no válido o inactivo");
+        }
+        if (coupon.getMinAmount() != null && orderSubtotal.compareTo(coupon.getMinAmount()) < 0) {
+            throw new IllegalStateException("El cupón requiere un monto mínimo de " + coupon.getMinAmount());
+        }
+        return mapToDTO(coupon);
+    }
+
     public CouponDTO createCoupon(CouponCreateRequest request) {
         if (couponRepository.existsByCode(request.getCode().toUpperCase())) {
             throw new IllegalArgumentException("El código del cupón ya existe");
@@ -62,9 +73,13 @@ public class CouponService {
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cupón no encontrado"));
         if (request.getDescription() != null) coupon.setDescription(request.getDescription());
+        if (request.getDiscountType() != null) coupon.setDiscountType(request.getDiscountType());
         if (request.getDiscountValue() != null) coupon.setDiscountValue(request.getDiscountValue());
+        if (request.getMinAmount() != null) coupon.setMinAmount(request.getMinAmount());
+        if (request.getMaxUses() != null) coupon.setMaxUses(request.getMaxUses());
         if (request.getValidFrom() != null) coupon.setValidFrom(request.getValidFrom());
         if (request.getValidUntil() != null) coupon.setValidUntil(request.getValidUntil());
+        if (request.getActive() != null) coupon.setActive(request.getActive());
         return mapToDTO(couponRepository.save(coupon));
     }
 

@@ -77,6 +77,10 @@ public class CartService {
         if (quantity <= 0) {
             cartItemRepository.delete(item);
         } else {
+            Product product = item.getProduct();
+            if (product != null && product.getStock() < quantity) {
+                throw new IllegalStateException("Stock insuficiente para: " + product.getName());
+            }
             item.setQuantity(quantity);
             cartItemRepository.save(item);
         }
