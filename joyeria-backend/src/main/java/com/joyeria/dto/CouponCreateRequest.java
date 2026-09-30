@@ -23,6 +23,7 @@ public class CouponCreateRequest {
     private BigDecimal discountValue;
     private BigDecimal minAmount;
     private Integer maxUses;
+    private Boolean active;
     private LocalDateTime validFrom;
     private LocalDateTime validUntil;
 }

@@ -10,7 +10,7 @@ administracion y area de cliente. Las piezas se muestran con **imagenes de produ
 
 ## Requisitos
 - Node 18+
-- Java 17+
+- Java 25+
 - Maven 3.9+
 - PostgreSQL 16/17
 - Docker (opcional, para despliegue)
