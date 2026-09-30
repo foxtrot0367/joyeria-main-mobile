@@ -97,6 +97,7 @@ class OrderServiceTest {
     void createOrder_WithInsufficientStock_ThrowsException() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
         testProduct.setStock(1);
 
         OrderCreateRequest request = new OrderCreateRequest();
