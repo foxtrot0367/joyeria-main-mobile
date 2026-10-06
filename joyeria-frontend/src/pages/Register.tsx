@@ -110,7 +110,7 @@ export default function Register() {
           </div>
           <button
             type="button"
-            onClick={() => toast('Google OAuth requiere configuración en Google Cloud Console', 'info')}
+            onClick={() => toast('Google OAuth no está configurado. Configura VITE_GOOGLE_CLIENT_ID', 'error')}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-line rounded-lg text-sm text-foreground hover:bg-surface-muted transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -3,11 +3,14 @@ package com.joyeria.controller;
 import com.joyeria.dto.*;
 import com.joyeria.model.User;
 import com.joyeria.service.AuthService;
+import com.joyeria.service.GoogleOAuthService;
 import com.joyeria.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final GoogleOAuthService googleOAuthService;
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
@@ -67,6 +71,13 @@ public class AuthController {
                 request.getFirstName(),
                 request.getLastName()
         );
+        return ResponseEntity.ok(ApiResponse.success("Inicio de sesión con Google exitoso", response));
+    }
+
+    @GetMapping("/google/callback")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleCallback(
+            @AuthenticationPrincipal OAuth2User oauth2User) {
+        AuthResponse response = googleOAuthService.authenticateGoogleUser(oauth2User.getAttributes());
         return ResponseEntity.ok(ApiResponse.success("Inicio de sesión con Google exitoso", response));
     }
 }
