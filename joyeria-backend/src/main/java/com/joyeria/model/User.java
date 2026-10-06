@@ -49,10 +49,12 @@ public class User {
     private String phone;
 
     @JsonIgnore
-    @NotBlank
     @Size(min = 8)
     @Column(nullable = false)
     private String password;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
