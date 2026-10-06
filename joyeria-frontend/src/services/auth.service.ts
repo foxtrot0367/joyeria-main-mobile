@@ -29,4 +29,14 @@ export const authService = {
     const { data } = await api.post<ApiResponse<null>>('/auth/reset-password', { token, newPassword })
     return data.message || 'Contraseña actualizada'
   },
+
+  async loginWithGoogle(googleData: {
+    googleId: string
+    email: string
+    firstName: string
+    lastName: string
+  }): Promise<AuthResponse> {
+    const { data } = await api.post<ApiResponse<AuthResponse>>('/auth/google', googleData)
+    return data.data
+  },
 }

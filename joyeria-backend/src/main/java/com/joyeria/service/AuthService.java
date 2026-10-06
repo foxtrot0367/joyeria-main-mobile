@@ -84,4 +84,39 @@ public class AuthService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
     }
+
+    public AuthResponse loginWithGoogle(String email, String googleId, String firstName, String lastName) {
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setFirstName(firstName);
+                    newUser.setLastName(lastName);
+                    newUser.setEmail(email);
+                    newUser.setGoogleId(googleId);
+                    newUser.setPhone("");
+                    newUser.setPassword("");
+                    newUser.setRole(UserRole.USER);
+                    newUser.setActive(true);
+                    return userRepository.save(newUser);
+                });
+
+        if (!user.getActive()) {
+            throw new IllegalStateException("Usuario desactivado");
+        }
+
+        if (user.getGoogleId() == null) {
+            user.setGoogleId(googleId);
+            user = userRepository.save(user);
+        }
+
+        String token = tokenProvider.generateToken(user.getEmail());
+
+        return AuthResponse.builder()
+                .token(token)
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .build();
+    }
 }

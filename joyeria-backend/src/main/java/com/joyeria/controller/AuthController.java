@@ -58,4 +58,15 @@ public class AuthController {
                 .build();
         return ResponseEntity.ok(ApiResponse.success(dto));
     }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponse>> loginWithGoogle(@RequestBody GoogleAuthRequest request) {
+        AuthResponse response = authService.loginWithGoogle(
+                request.getEmail(),
+                request.getGoogleId(),
+                request.getFirstName(),
+                request.getLastName()
+        );
+        return ResponseEntity.ok(ApiResponse.success("Inicio de sesión con Google exitoso", response));
+    }
 }
