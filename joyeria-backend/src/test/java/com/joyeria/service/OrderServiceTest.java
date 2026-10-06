@@ -1,7 +1,6 @@
 package com.joyeria.service;
 
 import com.joyeria.dto.OrderCreateRequest;
-import com.joyeria.dto.OrderDTO;
 import com.joyeria.exception.ResourceNotFoundException;
 import com.joyeria.model.*;
 import com.joyeria.repository.*;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 

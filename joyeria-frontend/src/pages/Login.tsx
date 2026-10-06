@@ -33,9 +33,48 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      // En producción, aquí se integraría con Google Identity Services
-      // Por ahora, mostramos un mensaje informativo
-      toast('Google OAuth requiere configuración en Google Cloud Console', 'info')
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+      if (!clientId) {
+        toast('Google OAuth no está configurado. Configura VITE_GOOGLE_CLIENT_ID', 'error')
+        return
+      }
+
+      const script = document.createElement('script')
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      document.body.appendChild(script)
+
+      script.onload = () => {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (response: { credential: string }) => {
+            try {
+              const res = await fetch(import.meta.env.VITE_API_URL + '/api/auth/google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: response.credential })
+              })
+              const data = await res.json()
+              if (data.success) {
+                localStorage.setItem('token', data.data.token)
+                localStorage.setItem('user', JSON.stringify({
+                  id: data.data.id,
+                  email: data.data.email,
+                  fullName: data.data.fullName,
+                  role: data.data.role
+                }))
+                window.location.href = '/'
+              } else {
+                toast(data.message || 'Error al iniciar sesión con Google', 'error')
+              }
+            } catch (err) {
+              toast('Error al iniciar sesión con Google', 'error')
+            }
+          }
+        })
+        window.google.accounts.id.prompt()
+      }
     } catch (err: unknown) {
       toast('Error al iniciar sesión con Google', 'error')
     }
