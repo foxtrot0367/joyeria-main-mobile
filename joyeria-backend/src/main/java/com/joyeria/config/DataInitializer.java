@@ -5,15 +5,16 @@ import com.joyeria.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
+@Profile("dev")
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -110,7 +111,7 @@ public class DataInitializer implements CommandLineRunner {
         demoUser.setActive(true);
         userRepository.save(demoUser);
 
-        log.info("Usuarios de prueba creados: admin@joyeria.com / admin123");
+        log.info("Usuarios de prueba creados (perfil dev)");
     }
 
     private void seedProducts() {
