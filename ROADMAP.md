@@ -60,9 +60,26 @@
 
 ---
 
-## FASE 2 — Arquitectura
+## FASE 2 — Arquitectura ✅ (completada)
 
 **Objetivo:** limpieza estructural sin cambiar comportamiento visible.
+
+**Estado: COMPLETADA** — commits `b8d1e17`…`fa9396e` (11 commits).
+
+**Resumen de implementación:**
+1. ✅ Código muerto backend: `SearchRequest`, `Cart.sessionId`+`findBySessionId`, `validateCouponForOrder`, `createGuestTicket`+regla guest `permitAll` (el frontend nunca la usó) + migración `V9__drop_orphan_columns.sql` (`cart.session_id`, `support_tickets.customer_name/email`, `ticket_responses.is_staff`, `inventory.reference`) — `b8d1e17`.
+2. ✅ `@CrossOrigin` eliminado de los 16 controllers, solo CORS central (`B-M15`) — `5a5f167`.
+3. ✅ `GlobalExceptionHandler` completo (405/415/400 de tipo, `instanceof FieldError` sin cast ciego) + `SecurityConfig` con `authenticationEntryPoint`/`accessDeniedHandler` en JSON (`B-M5`) — `085f8f1`.
+4. ✅ Frontend: `utils/errors.ts` (`getErrorMessage`, 16 archivos convertidos — `F-M5`), `utils/shipping.ts` con constantes compartidas (`F-M4`), dedupe de servicios (`F-M6`: `adminService` sin métodos de entidad, `coupon.service.ts` nuevo, `orderService.getAllOrders(page,size,status)`) — `5208faa`, `445deee`.
+5. ✅ Hook `useAbortableEffect` + `signal` en servicios (`product`, `user`) aplicado a `Catalog` y `ProductDetail` (`F-M3`) — `f69e568`.
+6. ✅ `ErrorBoundary` montado en `main.tsx` (`F-A3`) — `05d4158`.
+7. ✅ 401 sin `window.location`: evento `auth:session-expired` + `SessionWatcher` en `App` + banner en `Login` (`F-A2`); `logout` memoizado — `4c8fac2`.
+8. ✅ `tsconfig`: `noUnusedLocals: true`, `vite.config.ts` en `include`, `@eslint/js@^9` declarado en devDependencies — `d3eb047`.
+9. ✅ Dead code frontend: `SearchBar.tsx`, `ProductTurntable.tsx`, `three`/`@types/three`, `localStorage['user']` (nadie lo leía) — `fa9396e`.
+
+**Verificación final:** `mvn test` 13/13 ✅, `npm run lint` 0 errores (9 warnings preexistentes) ✅, `tsc --noEmit` ✅, `npm run build` ✅. Smoke tests en vivo: Flyway aplicó V9 (now at v9), `/products` 200, sin token → 401 `{"success":false,"message":"No autenticado"}`, método no soportado → 405 JSON, `text/plain` → 415 JSON, token USER en `/admin/users` → 403 `{"message":"Acceso denegado"}`, login user+admin `type=Bearer`, admin stats 200.
+
+**Pendiente explícito:** C6 (rotar `JWT_SECRET` e limpiar historial git) — pospuesto a Fase 3, requiere tu autorización.
 
 **Tareas:**
 1. Backend: eliminar código muerto (`SearchRequest`, `validateCouponForOrder`→integrarlo, `createGuestTicket`, `Cart.sessionId`, columnas huérfanas vía migración V9 si aplica).
