@@ -1,5 +1,8 @@
+import axios from 'axios'
 import api from './api'
 import type { ApiResponse, AuthResponse, User } from '../types'
+
+const baseURL = import.meta.env.VITE_API_URL || '/api'
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
@@ -28,5 +31,11 @@ export const authService = {
   async resetPassword(token: string, newPassword: string): Promise<string> {
     const { data } = await api.post<ApiResponse<null>>('/auth/reset-password', { token, newPassword })
     return data.message || 'Contraseña actualizada'
+  },
+
+  logout(refreshToken: string): Promise<void> {
+    return axios.post(`${baseURL}/auth/logout`, { refreshToken }, {
+      headers: { 'Content-Type': 'application/json' },
+    }).then(() => undefined)
   },
 }

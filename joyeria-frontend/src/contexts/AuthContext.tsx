@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData)
     } catch {
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       setUser(null)
     } finally {
       setLoading(false)
@@ -56,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authService.login(email, password)
       localStorage.setItem('token', res.token)
+      if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken)
       setUser({ id: res.id, email: res.email, firstName: res.fullName.split(' ')[0],
         lastName: res.fullName.split(' ').slice(1).join(' '),
         role: res.role as 'USER' | 'ADMIN', active: true } as User)
@@ -69,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authService.register(userData)
       localStorage.setItem('token', res.token)
+      if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken)
       setUser({ id: res.id, email: res.email, firstName: res.fullName.split(' ')[0],
         lastName: res.fullName.split(' ').slice(1).join(' '),
         role: res.role as 'USER' | 'ADMIN', active: true } as User)
@@ -78,7 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = useCallback(() => {
+    const refreshToken = localStorage.getItem('refreshToken')
+    if (refreshToken) {
+      authService.logout(refreshToken).catch(() => undefined)
+    }
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     setUser(null)
   }, [])
 

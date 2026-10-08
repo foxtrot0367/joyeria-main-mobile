@@ -206,6 +206,7 @@ export interface PagedResponse<T> {
 
 export interface AuthResponse {
   token: string
+  refreshToken?: string
   type?: string
   id: number
   email: string
