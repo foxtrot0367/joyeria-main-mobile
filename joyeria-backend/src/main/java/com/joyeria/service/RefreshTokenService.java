@@ -1,5 +1,6 @@
 package com.joyeria.service;
 
+import com.joyeria.exception.SessionExpiredException;
 import com.joyeria.model.RefreshToken;
 import com.joyeria.model.User;
 import com.joyeria.repository.RefreshTokenRepository;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
@@ -35,7 +37,7 @@ public class RefreshTokenService {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setTokenHash(sha256Hex(token));
-        refreshToken.setExpiresAt(LocalDateTime.now().plus(java.time.Duration.ofMillis(refreshExpirationMs)));
+        refreshToken.setExpiresAt(LocalDateTime.now().plus(Duration.ofMillis(refreshExpirationMs)));
         refreshToken.setRevoked(false);
         tokenRepository.save(refreshToken);
 
@@ -45,19 +47,19 @@ public class RefreshTokenService {
     @Transactional
     public User verifyAndRotate(String token) {
         if (token == null || token.isBlank()) {
-            throw new IllegalArgumentException("Sesión inválida");
+            throw new SessionExpiredException("Sesión inválida");
         }
         RefreshToken stored = tokenRepository.findByTokenHash(sha256Hex(token))
-                .orElseThrow(() -> new IllegalArgumentException("Sesión inválida"));
+                .orElseThrow(() -> new SessionExpiredException("Sesión inválida"));
 
         if (Boolean.TRUE.equals(stored.getRevoked())) {
             tokenRepository.revokeAllForUser(stored.getUser().getId());
-            throw new IllegalArgumentException("Sesión inválida");
+            throw new SessionExpiredException("Sesión inválida");
         }
         if (stored.getExpiresAt().isBefore(LocalDateTime.now())) {
             stored.setRevoked(true);
             tokenRepository.save(stored);
-            throw new IllegalArgumentException("Sesión inválida");
+            throw new SessionExpiredException("Sesión inválida");
         }
 
         stored.setRevoked(true);

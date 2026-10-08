@@ -98,6 +98,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Credenciales inválidas"));
     }
 
+    @ExceptionHandler(SessionExpiredException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSessionExpired(SessionExpiredException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(e.getMessage()));
+    }
+
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleUsernameNotFound(UsernameNotFoundException e) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
