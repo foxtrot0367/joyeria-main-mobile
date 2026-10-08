@@ -1,12 +1,16 @@
 package com.joyeria.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.joyeria.dto.ApiResponse;
 import com.joyeria.security.JwtAuthenticationFilter;
 import com.joyeria.security.RateLimitFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,6 +27,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.io.IOException;
 import java.util.List;
 
 @Configuration
@@ -33,6 +38,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -70,16 +76,28 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/newsletter/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/social-links").permitAll()
-                .requestMatchers("/api/support/tickets/guest").permitAll()
                 .requestMatchers("/api/payments/webhook/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) ->
+                        writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "No autenticado"))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        writeError(response, HttpServletResponse.SC_FORBIDDEN, "Acceso denegado")))
             .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private void writeError(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        objectMapper.writeValue(response.getOutputStream(),
+                ApiResponse.builder().success(false).message(message).build());
     }
 
     @Bean
