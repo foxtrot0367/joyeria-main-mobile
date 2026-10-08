@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { SESSION_EXPIRED_EVENT } from '../utils/sessionEvents'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -25,7 +26,7 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
       }
     }
     return Promise.reject(error)

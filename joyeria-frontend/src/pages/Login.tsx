@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -15,6 +15,8 @@ export default function Login() {
   const { login } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  const expiredMessage = (location.state as { message?: string } | null)?.message
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +42,11 @@ export default function Login() {
           <h1 className="font-serif text-2xl font-medium text-foreground">Iniciar sesión</h1>
           <p className="text-sm text-foreground-faint mt-1">Bienvenido de vuelta a AURA</p>
         </div>
+        {expiredMessage && (
+          <div className="mb-5 px-4 py-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm text-amber-700 dark:text-amber-400" role="status">
+            {expiredMessage}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-foreground-muted mb-1.5">Email</label>

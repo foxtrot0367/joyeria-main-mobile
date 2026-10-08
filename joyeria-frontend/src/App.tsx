@@ -1,11 +1,29 @@
-import { Routes, Route } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
 import MainLayout from './layouts/MainLayout'
 import AdminLayout from './layouts/AdminLayout'
 import ProtectedRoute from './routes/ProtectedRoute'
 import AdminRoute from './routes/AdminRoute'
 import Loader from './components/Loader'
 import CookieConsent from './components/CookieConsent'
+import { useAuth } from './contexts/AuthContext'
+import { SESSION_EXPIRED_EVENT, SESSION_EXPIRED_MESSAGE } from './utils/sessionEvents'
+
+function SessionWatcher() {
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  useEffect(() => {
+    const handler = () => {
+      logout()
+      navigate('/login', { state: { message: SESSION_EXPIRED_MESSAGE } })
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, handler)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handler)
+  }, [navigate, logout])
+
+  return null
+}
 
 const Home = lazy(() => import('./pages/Home'))
 const Catalog = lazy(() => import('./pages/Catalog'))
@@ -43,6 +61,7 @@ const AdminSocialLinks = lazy(() => import('./pages/admin/AdminSocialLinks'))
 export default function App() {
   return (
     <>
+      <SessionWatcher />
       <Routes>
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Suspense fallback={<Loader />}><Home /></Suspense>} />
