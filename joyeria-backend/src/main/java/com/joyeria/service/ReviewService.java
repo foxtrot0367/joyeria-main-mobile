@@ -19,6 +19,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
 
     public PagedResponse<ReviewDTO> getProductReviews(Long productId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -43,13 +44,21 @@ public class ReviewService {
             throw new IllegalArgumentException("Ya has reseñado este producto");
         }
 
+        boolean purchased = orderRepository.existsByUserIdAndItemsProductIdAndStatusIn(
+                user.getId(), product.getId(),
+                List.of(Order.OrderStatus.PAID, Order.OrderStatus.PREPARING,
+                        Order.OrderStatus.SHIPPED, Order.OrderStatus.DELIVERED));
+        if (!purchased) {
+            throw new IllegalArgumentException("Solo puedes reseñar productos que hayas comprado");
+        }
+
         Review review = new Review();
         review.setProduct(product);
         review.setUser(user);
         review.setRating(request.getRating());
         review.setTitle(request.getTitle());
         review.setComment(request.getComment());
-        review.setStatus(Review.ReviewStatus.APPROVED);
+        review.setStatus(Review.ReviewStatus.PENDING);
 
         return mapToDTO(reviewRepository.save(review));
     }

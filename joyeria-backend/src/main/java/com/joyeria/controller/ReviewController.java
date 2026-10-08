@@ -33,7 +33,8 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<ApiResponse<ReviewDTO>> createReview(
             Authentication authentication, @Valid @RequestBody ReviewCreateRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Reseña creada", reviewService.createReview(authentication.getName(), request)));
+        return ResponseEntity.ok(ApiResponse.success("Reseña enviada. Será visible tras aprobación",
+                reviewService.createReview(authentication.getName(), request)));
     }
 
     @GetMapping("/check/{productId}")

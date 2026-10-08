@@ -18,6 +18,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+    boolean existsByUserIdAndItemsProductIdAndStatusIn(Long userId, Long productId, java.util.Collection<OrderStatus> statuses);
     
     @Query("SELECT COALESCE(SUM(o.total), 0) FROM Order o WHERE o.status = :status")
     java.math.BigDecimal sumTotalByStatus(@Param("status") OrderStatus status);
