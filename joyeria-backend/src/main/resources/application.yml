@@ -29,12 +29,6 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 20MB
-
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
-
-spring:
   security:
     oauth2:
       client:
@@ -45,6 +39,10 @@ spring:
             scope:
               - email
               - profile
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
@@ -69,4 +67,4 @@ cloudinary:
 logging:
   level:
     org.springframework.security: INFO
-    com.joyeria: DEBUG
+    com.joyeria: ${LOG_LEVEL:INFO}
