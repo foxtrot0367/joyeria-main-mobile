@@ -3,6 +3,7 @@ package com.joyeria.config;
 import com.joyeria.security.JwtAuthenticationFilter;
 import com.joyeria.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,6 +33,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -81,10 +85,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
+        java.util.Set<String> origins = new java.util.LinkedHashSet<>(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000"
         ));
+        for (String origin : frontendUrl.split(",")) {
+            String trimmed = origin.trim();
+            if (!trimmed.isEmpty()) {
+                origins.add(trimmed);
+            }
+        }
+        configuration.setAllowedOrigins(List.copyOf(origins));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
