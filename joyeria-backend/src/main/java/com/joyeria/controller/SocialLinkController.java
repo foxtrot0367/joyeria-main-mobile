@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/social-links")
 @RequiredArgsConstructor
-@CrossOrigin
 public class SocialLinkController {
 
     private final SocialLinkService socialLinkService;

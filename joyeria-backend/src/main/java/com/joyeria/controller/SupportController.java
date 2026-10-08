@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/support")
 @RequiredArgsConstructor
-@CrossOrigin
 public class SupportController {
 
     private final SupportService supportService;

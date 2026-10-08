@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
-@CrossOrigin
 public class SearchController {
 
     private final ProductService productService;
