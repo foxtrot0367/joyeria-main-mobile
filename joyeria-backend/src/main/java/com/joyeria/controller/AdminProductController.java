@@ -24,7 +24,7 @@ public class AdminProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductDTO>> updateProduct(
-            @PathVariable Long id, @RequestBody ProductCreateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody ProductCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Producto actualizado", productService.updateProduct(id, request)));
     }
 

@@ -32,7 +32,7 @@ public class AddressController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AddressDTO>> updateAddress(
             Authentication authentication,
-            @PathVariable Long id, @RequestBody AddressCreateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody AddressCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Dirección actualizada",
                 addressService.updateAddress(authentication.getName(), id, request)));
     }

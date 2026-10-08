@@ -45,6 +45,10 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("No autenticado"));
+        }
         User user = authService.getCurrentUser(authentication.getName());
         UserDTO dto = UserDTO.builder()
                 .id(user.getId())

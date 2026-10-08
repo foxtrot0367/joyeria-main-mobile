@@ -26,7 +26,7 @@ public class UserController {
 
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<UserDTO>> updateProfile(
-            Authentication authentication, @RequestBody UserUpdateRequest request) {
+            Authentication authentication, @Valid @RequestBody UserUpdateRequest request) {
         UserDTO updated = userService.updateProfile(authentication.getName(), request);
         return ResponseEntity.ok(ApiResponse.success("Perfil actualizado", updated));
     }

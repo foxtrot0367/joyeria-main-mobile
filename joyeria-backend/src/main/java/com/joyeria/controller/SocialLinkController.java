@@ -38,7 +38,7 @@ public class SocialLinkController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SocialLinkDTO>> update(
-            @PathVariable Long id, @RequestBody SocialLinkCreateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody SocialLinkCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Enlace actualizado", socialLinkService.updateLink(id, request)));
     }
 

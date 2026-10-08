@@ -40,6 +40,10 @@ public class ReviewController {
     @GetMapping("/check/{productId}")
     public ResponseEntity<ApiResponse<Boolean>> hasReviewed(
             Authentication authentication, @PathVariable Long productId) {
+        if (authentication == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("No autenticado"));
+        }
         return ResponseEntity.ok(ApiResponse.success(reviewService.hasUserReviewed(authentication.getName(), productId)));
     }
 }

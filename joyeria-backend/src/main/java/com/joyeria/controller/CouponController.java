@@ -37,7 +37,7 @@ public class CouponController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CouponDTO>> update(
-            @PathVariable Long id, @RequestBody CouponCreateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody CouponCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Cupón actualizado", couponService.updateCoupon(id, request)));
     }
 

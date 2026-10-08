@@ -37,7 +37,7 @@ public class MaterialController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<MaterialDTO>> update(
-            @PathVariable Long id, @RequestBody MaterialCreateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody MaterialCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Material actualizado", materialService.updateMaterial(id, request)));
     }
 

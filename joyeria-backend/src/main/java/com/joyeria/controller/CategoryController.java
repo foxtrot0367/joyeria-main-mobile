@@ -42,7 +42,7 @@ public class CategoryController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CategoryDTO>> update(
-            @PathVariable Long id, @RequestBody CategoryCreateRequest request) {
+            @PathVariable Long id, @Valid @RequestBody CategoryCreateRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Categoría actualizada", categoryService.updateCategory(id, request)));
     }
 
