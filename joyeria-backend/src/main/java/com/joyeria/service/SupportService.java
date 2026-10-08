@@ -56,17 +56,6 @@ public class SupportService {
     }
 
     @Transactional
-    public SupportTicketDTO createGuestTicket(SupportTicketCreateRequest request) {
-        SupportTicket ticket = new SupportTicket();
-        ticket.setTicketNumber("TKT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        ticket.setSubject(request.getSubject());
-        ticket.setMessage(request.getMessage());
-        ticket.setCategory(request.getCategory());
-        ticket.setStatus(SupportTicket.TicketStatus.OPEN);
-        return mapToDTO(ticketRepository.save(ticket));
-    }
-
-    @Transactional
     public SupportTicketDTO addResponse(String ticketNumber, String email, TicketResponseRequest request) {
         SupportTicket ticket = ticketRepository.findByTicketNumber(ticketNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket no encontrado"));

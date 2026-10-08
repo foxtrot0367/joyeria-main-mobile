@@ -41,17 +41,6 @@ public class CouponService {
         return mapToDTO(coupon);
     }
 
-    public CouponDTO validateCouponForOrder(String code, java.math.BigDecimal orderSubtotal) {
-        Coupon coupon = validateCoupon(code) != null ? couponRepository.findByCodeAndActiveTrue(code).orElse(null) : null;
-        if (coupon == null) {
-            throw new ResourceNotFoundException("Cupón no válido o inactivo");
-        }
-        if (coupon.getMinAmount() != null && orderSubtotal.compareTo(coupon.getMinAmount()) < 0) {
-            throw new IllegalStateException("El cupón requiere un monto mínimo de " + coupon.getMinAmount());
-        }
-        return mapToDTO(coupon);
-    }
-
     public CouponDTO createCoupon(CouponCreateRequest request) {
         if (couponRepository.existsByCode(request.getCode().toUpperCase())) {
             throw new IllegalArgumentException("El código del cupón ya existe");
