@@ -4,10 +4,6 @@ import type { ApiResponse, SocialLink, Coupon } from '../types'
 export interface PaymentRequest {
   orderId: number
   paymentMethod: string
-  cardNumber?: string
-  cardName?: string
-  expiry?: string
-  cvv?: string
 }
 
 export interface PaymentResponse {

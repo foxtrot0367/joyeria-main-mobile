@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,9 +24,23 @@ public class PaymentService {
     private final OrderRepository orderRepository;
 
     @Transactional
-    public Map<String, Object> processPayment(PaymentRequest request) {
+    public Map<String, Object> processPayment(String userEmail, PaymentRequest request) {
         Order order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));
+        if (!order.getUser().getEmail().equals(userEmail)) {
+            throw new ResourceNotFoundException("Pedido no encontrado");
+        }
+
+        Optional<Payment> existingApproved = paymentRepository.findByOrderId(order.getId()).stream()
+                .filter(p -> p.getStatus() == Payment.PaymentStatus.APPROVED)
+                .findFirst();
+        if (existingApproved.isPresent()) {
+            return buildResponse(existingApproved.get());
+        }
+
+        if (order.getStatus() != Order.OrderStatus.PENDING) {
+            throw new IllegalStateException("El pedido no está pendiente de pago");
+        }
 
         Payment payment = new Payment();
         payment.setOrder(order);
@@ -43,18 +58,15 @@ public class PaymentService {
         order.setPaymentMethod(request.getPaymentMethod());
         orderRepository.save(order);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "approved");
-        response.put("reference", payment.getProviderReference());
-        response.put("amount", payment.getAmount());
-        response.put("currency", payment.getCurrency());
-        response.put("message", "Pago procesado exitosamente");
-        return response;
+        return buildResponse(payment);
     }
 
-    public PaymentDTO getPaymentByReference(String reference) {
+    public PaymentDTO getPaymentByReference(String userEmail, String reference) {
         Payment payment = paymentRepository.findByProviderReference(reference)
                 .orElseThrow(() -> new ResourceNotFoundException("Pago no encontrado"));
+        if (!payment.getOrder().getUser().getEmail().equals(userEmail)) {
+            throw new ResourceNotFoundException("Pago no encontrado");
+        }
         return PaymentDTO.builder()
                 .id(payment.getId())
                 .orderId(payment.getOrder().getId())
@@ -66,6 +78,16 @@ public class PaymentService {
                 .status(payment.getStatus().name())
                 .createdAt(payment.getCreatedAt())
                 .build();
+    }
+
+    private Map<String, Object> buildResponse(Payment payment) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "approved");
+        response.put("reference", payment.getProviderReference());
+        response.put("amount", payment.getAmount());
+        response.put("currency", payment.getCurrency());
+        response.put("message", "Pago procesado exitosamente");
+        return response;
     }
 
     @lombok.Data

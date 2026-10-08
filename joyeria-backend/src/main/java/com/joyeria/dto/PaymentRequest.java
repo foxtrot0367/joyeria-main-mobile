@@ -12,6 +12,4 @@ public class PaymentRequest {
     @NotNull
     private Long orderId;
     private String paymentMethod;
-    private String token;
-    private String cardNumber;
 }

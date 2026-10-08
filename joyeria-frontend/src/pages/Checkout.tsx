@@ -20,7 +20,7 @@ export default function Checkout() {
   const [coupon, setCoupon] = useState('')
   const [couponApplied, setCouponApplied] = useState<Coupon | null>(null)
   const [shipping, setShipping] = useState<{ address: string; city: string; department: string; recipient: string; phone: string }>({ address: '', city: '', department: '', recipient: '', phone: '' })
-  const [payment, setPayment] = useState<{ method: string; cardNumber: string; cardName: string; expiry: string; cvv: string }>({ method: 'card', cardNumber: '', cardName: '', expiry: '', cvv: '' })
+  const [payment, setPayment] = useState<{ method: string }>({ method: 'card' })
 
   const applyCoupon = async () => {
     try {
@@ -40,13 +40,13 @@ export default function Checkout() {
         couponCode: couponApplied?.code || undefined, notes: ''
       })
 
-      await paymentService.processPayment({ orderId: order.id, paymentMethod: payment.method, cardNumber: payment.cardNumber })
+      await paymentService.processPayment({ orderId: order.id, paymentMethod: payment.method })
       navigate(`/pedido-confirmado/${order.orderNumber}`)
     } catch (err: unknown) {
       const response = err instanceof Error && 'response' in err
         ? (err as { response?: { data?: { message?: string; data?: string } } }).response?.data
         : undefined
-      toast(response?.message || `Error: ${response?.data || ''} ${response?.message || ''}`, 'error')
+      toast(response?.message || 'Error al procesar el pago', 'error')
     } finally { setLoading(false) }
   }
 
@@ -75,8 +75,8 @@ export default function Checkout() {
       <div className="flex items-center gap-4 mb-8">
         {[1, 2, 3].map(s => (
           <div key={s} className="flex items-center gap-4">
-            <button onClick={() => setStep(s)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition ${step >= s ? 'bg-[#C9A227] text-white' : 'bg-surface-elevated text-foreground-faint'}`}>
+            <button onClick={() => s < step && setStep(s)} disabled={s >= step}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition ${step >= s ? 'bg-[#C9A227] text-white' : 'bg-surface-elevated text-foreground-faint'} ${s >= step ? 'cursor-default' : 'hover:opacity-80'}`}>
               {step > s ? <Check size={16} /> : s}
             </button>
             <span className={`text-sm hidden md:block ${step >= s ? 'text-foreground font-medium' : 'text-foreground-faint'}`}>
@@ -121,27 +121,16 @@ export default function Checkout() {
                 ))}
               </div>
               {payment.method === 'card' ? (
-                <div className="space-y-4">
-                  <div><label className="block text-xs font-medium text-foreground-faint mb-1">Número de tarjeta</label>
-                    <input value={payment.cardNumber} onChange={e => setPayment({ ...payment, cardNumber: e.target.value })} placeholder="4242 4242 4242 4242"
-                      className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" /></div>
-                  <div><label className="block text-xs font-medium text-foreground-faint mb-1">Nombre en la tarjeta</label>
-                    <input value={payment.cardName} onChange={e => setPayment({ ...payment, cardName: e.target.value })} placeholder="NOMBRE APELLIDO"
-                      className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-xs font-medium text-foreground-faint mb-1">Caducidad</label>
-                      <input value={payment.expiry} onChange={e => setPayment({ ...payment, expiry: e.target.value })} placeholder="MM/AA"
-                        className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" /></div>
-                    <div><label className="block text-xs font-medium text-foreground-faint mb-1">CVV</label>
-                      <input value={payment.cvv} onChange={e => setPayment({ ...payment, cvv: e.target.value })} placeholder="123" type="password"
-                        className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" /></div>
-                  </div>
-                  <p className="text-xs text-foreground-faint flex items-center gap-1.5"><Lock size={12} /> Tu información de pago está protegida. No almacenamos datos de tarjetas.</p>
+                <div className="p-6 bg-background-warm rounded-lg text-center">
+                  <p className="text-sm font-medium text-foreground mb-1">Pago seguro con tarjeta</p>
+                  <p className="text-xs text-foreground-faint flex items-center justify-center gap-1.5">
+                    <Lock size={12} /> Serás redirigido a la pasarela de pago. No almacenamos ni transmitimos datos de tarjetas.
+                  </p>
                 </div>
               ) : (
                 <div className="p-6 bg-background-warm rounded-lg text-center">
-                  <img src="https://www.pse.com.co/static/img/PSE_Payment_icono.svg" alt="PSE" className="w-24 mx-auto mb-3" />
-                  <p className="text-sm text-foreground-faint">Serás redirigido a tu banco para completar la transferencia.</p>
+                  <p className="text-sm font-medium text-foreground mb-1">PSE (Débito)</p>
+                  <p className="text-xs text-foreground-faint">Serás redirigido a tu banco para completar la transferencia.</p>
                 </div>
               )}
               <div className="flex gap-3 mt-6">
