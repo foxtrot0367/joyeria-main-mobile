@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ShoppingCart, ChevronRight, Truck, Shield, Award, Star } from 'lucide-react'
 import { productService } from '../services/product.service'
 import { userService } from '../services/user.service'
+import useAbortableEffect from '../hooks/useAbortableEffect'
 import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -27,18 +28,23 @@ export default function ProductDetail() {
   const { isAuthenticated } = useAuth()
   const { toast } = useToast()
 
-  useEffect(() => {
+  useAbortableEffect((signal) => {
     if (!slug) return
     setLoading(true)
-    productService.getBySlug(slug).then(async (p) => {
+    productService.getBySlug(slug, signal).then((p) => {
+      if (signal.aborted) return
       setProduct(p)
       setLoading(false)
-      productService.getRelated(p.id).then(setRelated).catch(() => {})
-      userService.getProductReviews(p.id, 0, 5).then(r => setReviews(r.content)).catch(() => {})
+      productService.getRelated(p.id, signal).then(r => { if (!signal.aborted) setRelated(r) }).catch(() => {})
+      userService.getProductReviews(p.id, 0, 5, signal).then(r => { if (!signal.aborted) setReviews(r.content) }).catch(() => {})
       if (isAuthenticated) {
-        userService.isFavorite(p.id).then(setIsFavorite).catch(() => {})
+        userService.isFavorite(p.id, signal).then(f => { if (!signal.aborted) setIsFavorite(f) }).catch(() => {})
       }
-    }).catch(() => { setLoading(false); navigate('/productos') })
+    }).catch(() => {
+      if (signal.aborted) return
+      setLoading(false)
+      navigate('/productos')
+    })
   }, [slug, isAuthenticated, navigate])
 
   if (loading) return <div className="max-w-7xl mx-auto px-4 py-16"><Skeleton className="h-96" /></div>

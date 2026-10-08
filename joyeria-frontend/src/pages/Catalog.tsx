@@ -5,6 +5,7 @@ import { SlidersHorizontal, X, Check } from 'lucide-react'
 import { productService } from '../services/product.service'
 import { categoryService } from '../services/category.service'
 import { materialService } from '../services/material.service'
+import useAbortableEffect from '../hooks/useAbortableEffect'
 import type { Product, Category, Material, PagedResponse } from '../types'
 import ProductCard from '../components/ProductCard'
 import QuickViewModal from '../components/QuickViewModal'
@@ -44,7 +45,7 @@ export default function Catalog() {
     materialService.getAll().then(setMaterials).catch(() => {})
   }, [])
 
-  useEffect(() => {
+  useAbortableEffect((signal) => {
     setLoading(true)
     const params: Record<string, string | number | boolean> = { page, size: 12, sort, direction: dir }
     if (query) params.q = query
@@ -55,11 +56,12 @@ export default function Catalog() {
     if (minPrice) params.minPrice = minPrice
     if (maxPrice) params.maxPrice = maxPrice
 
-    const fetcher = query ? () => productService.search(query, params) : () => productService.getAll(params)
+    const fetcher = query ? () => productService.search(query, params, signal) : () => productService.getAll(params, signal)
     fetcher().then((res: PagedResponse<Product>) => {
+      if (signal.aborted) return
       setProducts(res.content)
       setMeta({ page: res.page, totalPages: res.totalPages, totalElements: res.totalElements })
-    }).finally(() => setLoading(false))
+    }).catch(() => {}).finally(() => { if (!signal.aborted) setLoading(false) })
   }, [query, category, material, color, inStock, sort, dir, page, minPrice, maxPrice])
 
   const updateParams = (key: string, value: string) => {

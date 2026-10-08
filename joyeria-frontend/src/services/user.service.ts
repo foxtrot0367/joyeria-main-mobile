@@ -78,8 +78,8 @@ export const userService = {
     return data.data
   },
 
-  async isFavorite(productId: number): Promise<boolean> {
-    const { data } = await api.get<ApiResponse<boolean>>(`/favorites/check/${productId}`)
+  async isFavorite(productId: number, signal?: AbortSignal): Promise<boolean> {
+    const { data } = await api.get<ApiResponse<boolean>>(`/favorites/check/${productId}`, { signal })
     return data.data
   },
 
@@ -93,8 +93,8 @@ export const userService = {
     return data.data
   },
 
-  async getProductReviews(productId: number, page = 0, size = 10): Promise<PagedResponse<Review>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<Review>>>(`/reviews/product/${productId}`, { params: { page, size } })
+  async getProductReviews(productId: number, page = 0, size = 10, signal?: AbortSignal): Promise<PagedResponse<Review>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<Review>>>(`/reviews/product/${productId}`, { params: { page, size }, signal })
     return data.data
   },
 

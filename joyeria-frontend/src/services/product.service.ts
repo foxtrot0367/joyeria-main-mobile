@@ -13,8 +13,8 @@ export interface ProductSearchParams {
 }
 
 export const productService = {
-  async getAll(params: ProductSearchParams = {}): Promise<PagedResponse<Product>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/products', { params })
+  async getAll(params: ProductSearchParams = {}, signal?: AbortSignal): Promise<PagedResponse<Product>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/products', { params, signal })
     return data.data
   },
 
@@ -23,8 +23,8 @@ export const productService = {
     return data.data
   },
 
-  async getBySlug(slug: string): Promise<Product> {
-    const { data } = await api.get<ApiResponse<Product>>(`/products/slug/${slug}`)
+  async getBySlug(slug: string, signal?: AbortSignal): Promise<Product> {
+    const { data } = await api.get<ApiResponse<Product>>(`/products/slug/${slug}`, { signal })
     return data.data
   },
 
@@ -43,13 +43,13 @@ export const productService = {
     return data.data
   },
 
-  async getRelated(id: number): Promise<Product[]> {
-    const { data } = await api.get<ApiResponse<Product[]>>(`/products/${id}/related`)
+  async getRelated(id: number, signal?: AbortSignal): Promise<Product[]> {
+    const { data } = await api.get<ApiResponse<Product[]>>(`/products/${id}/related`, { signal })
     return data.data
   },
 
-  async search(query: string, params: ProductSearchParams = {}): Promise<PagedResponse<Product>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/search', { params: { q: query, ...params } })
+  async search(query: string, params: ProductSearchParams = {}, signal?: AbortSignal): Promise<PagedResponse<Product>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/search', { params: { q: query, ...params }, signal })
     return data.data
   },
 }
