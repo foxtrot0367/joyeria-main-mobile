@@ -9,15 +9,7 @@
     <meta property="og:description" content="Fine Artisan Jewelry. Piezas hechas para celebrar la vida." />
     <meta property="og:type" content="website" />
     <meta name="theme-color" id="theme-color" content="#FFFFFF" />
-    <script>
-      ;(function () {
-        try {
-          var stored = localStorage.getItem('aura-theme')
-          var dark = stored === 'dark' || (!stored && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          if (dark) document.documentElement.classList.add('dark')
-        } catch (e) {}
-      })()
-    </script>
+    <script src="/theme-init.js"></script>
     <title>AURA | Joyería Fina Artesanal</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
