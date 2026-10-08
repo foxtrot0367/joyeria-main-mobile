@@ -102,18 +102,20 @@
 **Objetivo:** autenticación robusta y autorización correcta.
 
 **Tareas:**
-1. Google OAuth real: `.oauth2Login()` o verificación de `id_token` con `GoogleIdTokenVerifier`; eliminar el flujo que confía en datos del cliente (C3, B-A1, B-A2). Requiere `GOOGLE_CLIENT_ID/SECRET` — **si no existen, informar y dejar el flujo deshabilitado documentado**.
-2. Refresh tokens con rotación + logout real + invalidación al cambiar contraseña (B-M12).
-3. IDOR tickets de soporte: ownership en lectura/escritura (B-A3).
-4. Cookies de sesión/token: evaluar mover JWT de `localStorage` a cookie `httpOnly`+`Secure`+`SameSite` (F-A4) — decisión de arquitectura, documentar impacto.
-5. Cabeceras de seguridad en `nginx.conf` (CSP, HSTS, X-Frame-Options, Referrer-Policy, gzip) (I-M1, F-A4).
-6. Rate limit: no confiar en `X-Forwarded-For` sin proxy de confianza; corregir regla de cupones; limpieza determinista (I-A4, B-M1).
-7. Rotación JWT_SECRET + limpieza de historial git (C6) — **requiere tu autorización explícita por reescribir historia**.
-8. `DataInitializer` solo dev + política de contraseñas + mensajes uniformes (enumeración) (C5, B5).
-9. Reseñas: moderación por defecto + verificar compra (B-A5).
+1. ✅ Google OAuth: **sin credenciales en el entorno** → flujo deshabilitado documentado; eliminado `spring-boot-starter-oauth2-client` sin uso; `.env.example` explica cómo habilitarlo (B-A1, B-A2).
+2. ✅ Refresh tokens con rotación + reuse detection + logout real + invalidación al cambiar/restablecer contraseña (B-M12): migración `V10__refresh_tokens`, `RefreshTokenService` (hash SHA-256, expiración 7 días, revocación de la familia ante reuse), `POST /api/auth/refresh` y `POST /api/auth/logout`, interceptor axios con cola de peticiones para refresh concurrente único.
+3. ✅ IDOR tickets: ownership en lectura/escritura con el email del JWT (B-A3).
+4. ✅ Cookies: **decisión — mantener tokens en `localStorage`** por ahora; el riesgo XSS queda mitigado con CSP estricta (`script-src 'self'`), HSTS y sesiones de access cortas con refresh. Migrar a cookie `httpOnly` exige `withCredentials` en axios, `allowCredentials` en CORS y protección CSRF — queda como mejora futura documentada (F-A4).
+5. ✅ `nginx.conf`: CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy, nosniff y gzip; el script inline del tema se movió a `public/theme-init.js` para permitir CSP estricta (I-M1, F-A4).
+6. ✅ Rate limit: XFF solo se acepta desde proxies de confianza (`TRUSTED_PROXIES`, IPs exactas o CIDR), regla de cupones corregida a `POST|/api/coupons/validate`, limpieza determinista por intervalo (I-A4, B-M1).
+7. ⏳ Rotación JWT_SECRET + limpieza de historial git (C6) — **pendiente de tu autorización explícita por reescribir historia (force-push)**.
+8. ✅ `DataInitializer` solo dev (Fase 1, verificado) + política de contraseñas letra+número (validación `@Pattern` en backend y `pattern` en frontend) + mensaje de registro uniforme para email/teléfono existentes, mitigado con rate limit 5/min (C5, B5).
+9. ✅ Reseñas: moderación `PENDING` por defecto y verificación de compra en pedidos pagados (B-A5).
+
+**Tests de seguridad (37 en verde):** AuthService (8), RefreshTokenService (7), RateLimitFilter (6), SupportService (5), CouponService (4), OrderService (4), ReviewService (3).
 
 **Riesgos:** cambios en el flujo de auth afectan todas las sesiones; el paso a cookies httpOnly exige ajustar el interceptor axios; rotar el secreto invalida tokens vigentes.
-**Criterio de salida:** sin bypass de auth; sin IDOR en endpoints existentes; logout real funcional; tests de seguridad backend añadidos.
+**Criterio de salida:** ✅ sin bypass de auth; sin IDOR en endpoints existentes; logout real funcional (smoke en vivo: login → refresh → reuse = 401 → logout → refresh = 401); tests de seguridad backend añadidos. Pendiente: tarea 7 (C6) con autorización del usuario.
 
 ---
 
