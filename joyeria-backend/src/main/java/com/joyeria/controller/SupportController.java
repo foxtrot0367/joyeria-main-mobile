@@ -24,8 +24,10 @@ public class SupportController {
     }
 
     @GetMapping("/tickets/{ticketNumber}")
-    public ResponseEntity<ApiResponse<SupportTicketDTO>> getTicket(@PathVariable String ticketNumber) {
-        return ResponseEntity.ok(ApiResponse.success(supportService.getTicketByIdentifier(ticketNumber)));
+    public ResponseEntity<ApiResponse<SupportTicketDTO>> getTicket(
+            Authentication authentication, @PathVariable String ticketNumber) {
+        return ResponseEntity.ok(ApiResponse.success(
+                supportService.getTicketByIdentifier(ticketNumber, authentication.getName())));
     }
 
     @PostMapping("/tickets")

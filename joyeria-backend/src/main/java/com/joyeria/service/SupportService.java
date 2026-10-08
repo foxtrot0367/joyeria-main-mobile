@@ -34,9 +34,10 @@ public class SupportService {
         return mapToPagedResponse(tickets);
     }
 
-    public SupportTicketDTO getTicketByIdentifier(String ticketNumber) {
+    public SupportTicketDTO getTicketByIdentifier(String ticketNumber, String email) {
         SupportTicket ticket = ticketRepository.findByTicketNumber(ticketNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket no encontrado"));
+        assertOwnership(ticket, email);
         return mapToDTO(ticket);
     }
 
@@ -59,6 +60,7 @@ public class SupportService {
     public SupportTicketDTO addResponse(String ticketNumber, String email, TicketResponseRequest request) {
         SupportTicket ticket = ticketRepository.findByTicketNumber(ticketNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket no encontrado"));
+        assertOwnership(ticket, email);
         User user = userRepository.findByEmail(email).orElse(null);
 
         TicketResponse response = new TicketResponse();
@@ -80,6 +82,13 @@ public class SupportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket no encontrado"));
         ticket.setStatus(SupportTicket.TicketStatus.valueOf(status));
         return mapToDTO(ticketRepository.save(ticket));
+    }
+
+    private void assertOwnership(SupportTicket ticket, String email) {
+        if (ticket.getUser() == null || !ticket.getUser().getEmail().equals(email)) {
+            // Mismo mensaje que "no existe" para no revelar la existencia de tickets ajenos
+            throw new ResourceNotFoundException("Ticket no encontrado");
+        }
     }
 
     private SupportTicketDTO mapToDTO(SupportTicket ticket) {
