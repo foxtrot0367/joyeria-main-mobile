@@ -33,6 +33,7 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${REFRESH_JWT_EXPIRATION:604800000}
 
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}

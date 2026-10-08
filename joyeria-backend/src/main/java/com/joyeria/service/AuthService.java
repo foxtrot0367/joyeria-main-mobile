@@ -23,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthResponse login(AuthRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -36,15 +37,7 @@ public class AuthService {
             throw new IllegalStateException("Usuario desactivado");
         }
 
-        String token = tokenProvider.generateToken(authentication);
-
-        return AuthResponse.builder()
-                .token(token)
-                .id(user.getId())
-                .email(user.getEmail())
-                .fullName(user.getFullName())
-                .role(user.getRole().name())
-                .build();
+        return buildAuthResponse(user, tokenProvider.generateToken(authentication));
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -67,10 +60,22 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        String token = tokenProvider.generateToken(user.getEmail());
+        return buildAuthResponse(user, tokenProvider.generateToken(user.getEmail()));
+    }
 
+    public AuthResponse refresh(String refreshToken) {
+        User user = refreshTokenService.verifyAndRotate(refreshToken);
+        return buildAuthResponse(user, tokenProvider.generateToken(user.getEmail()));
+    }
+
+    public void logout(String refreshToken) {
+        refreshTokenService.revoke(refreshToken);
+    }
+
+    private AuthResponse buildAuthResponse(User user, String accessToken) {
         return AuthResponse.builder()
-                .token(token)
+                .token(accessToken)
+                .refreshToken(refreshTokenService.issueToken(user))
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())

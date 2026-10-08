@@ -35,6 +35,8 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtTokenProvider tokenProvider;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private AuthService authService;
@@ -74,11 +76,13 @@ class AuthServiceTest {
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
         when(tokenProvider.generateToken(authentication)).thenReturn("jwt-token");
+        when(refreshTokenService.issueToken(testUser)).thenReturn("refresh-token");
 
         AuthResponse response = authService.login(loginRequest);
 
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals("refresh-token", response.getRefreshToken());
         assertEquals("test@example.com", response.getEmail());
     }
 
@@ -113,10 +117,40 @@ class AuthServiceTest {
         when(passwordEncoder.encode("password123")).thenReturn("encoded_password");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(tokenProvider.generateToken("test@example.com")).thenReturn("jwt-token");
+        when(refreshTokenService.issueToken(testUser)).thenReturn("refresh-token");
 
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
         assertEquals("jwt-token", response.getToken());
+        assertEquals("refresh-token", response.getRefreshToken());
+    }
+
+    @Test
+    void refresh_WithValidToken_ReturnsNewTokens() {
+        when(refreshTokenService.verifyAndRotate("valid-refresh")).thenReturn(testUser);
+        when(tokenProvider.generateToken("test@example.com")).thenReturn("new-jwt");
+        when(refreshTokenService.issueToken(testUser)).thenReturn("new-refresh");
+
+        AuthResponse response = authService.refresh("valid-refresh");
+
+        assertEquals("new-jwt", response.getToken());
+        assertEquals("new-refresh", response.getRefreshToken());
+        assertEquals(1L, response.getId());
+    }
+
+    @Test
+    void refresh_WithInvalidToken_ThrowsException() {
+        when(refreshTokenService.verifyAndRotate("bad-refresh"))
+                .thenThrow(new IllegalArgumentException("Sesión inválida"));
+
+        assertThrows(IllegalArgumentException.class, () -> authService.refresh("bad-refresh"));
+    }
+
+    @Test
+    void logout_WithToken_RevokesRefreshToken() {
+        authService.logout("some-refresh");
+
+        org.mockito.Mockito.verify(refreshTokenService).revoke("some-refresh");
     }
 }

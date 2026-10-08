@@ -43,6 +43,18 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Contraseña actualizada exitosamente", null));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse response = authService.refresh(request.getRefreshToken());
+        return ResponseEntity.ok(ApiResponse.success("Sesión renovada", response));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody(required = false) RefreshTokenRequest request) {
+        authService.logout(request != null ? request.getRefreshToken() : null);
+        return ResponseEntity.ok(ApiResponse.success("Sesión cerrada", null));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser(Authentication authentication) {
         if (authentication == null) {

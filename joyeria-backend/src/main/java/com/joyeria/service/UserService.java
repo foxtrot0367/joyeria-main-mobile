@@ -18,6 +18,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
@@ -45,6 +46,7 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+        refreshTokenService.revokeAllForUser(user.getId());
     }
 
     public PagedResponse<UserDTO> getAllUsers(int page, int size) {

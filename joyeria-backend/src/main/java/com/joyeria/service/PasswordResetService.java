@@ -29,6 +29,7 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional
     public void requestPasswordReset(String email) {
@@ -72,6 +73,7 @@ public class PasswordResetService {
         resetToken.setUsed(true);
         tokenRepository.save(resetToken);
         tokenRepository.deleteByUserId(user.getId());
+        refreshTokenService.revokeAllForUser(user.getId());
     }
 
     private static String sha256Hex(String value) {
