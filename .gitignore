@@ -2,6 +2,7 @@
 node_modules/
 dist/
 target/
+coverage/
 *.tsbuildinfo
 
 # ---- secretos (nunca) ----
@@ -21,3 +22,12 @@ Thumbs.db
 # ---- IDE ----
 .idea/
 .vscode/
+.vs/
+*.iml
+.classpath
+.project
+.settings/
+.fleet/
+
+# ---- uploads de imágenes ----
+uploads/

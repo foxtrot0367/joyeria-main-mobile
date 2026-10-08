@@ -10,7 +10,7 @@ administracion y area de cliente. Las piezas se muestran con **imagenes de produ
 
 ## Requisitos
 - Node 18+
-- Java 25+
+- Java 25+ (si el `java` del sistema es anterior, exporta `JAVA_HOME` hacia un JDK 25 antes de ejecutar Maven)
 - Maven 3.9+
 - PostgreSQL 16/17
 - Docker (opcional, para despliegue)
@@ -25,10 +25,18 @@ npm run dev        # http://localhost:5173
 ```
 
 ### Backend
-```bash
+```powershell
 cd joyeria-backend
+$env:JWT_SECRET = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Max 256 }))  # requerido; no lo commitees
+$env:SPRING_PROFILES_ACTIVE = "dev"        # activa datos de prueba (DataInitializer)
 mvn spring-boot:run   # http://localhost:8080/api/...
 ```
+
+Sin el perfil `dev`, el backend arranca con la base de datos vacía (sin usuarios ni productos de prueba).
+
+**Datos de prueba (solo perfil `dev`):**
+- Admin: `admin@joyeria.com` / `admin123`
+- Cliente: `maria@example.com` / `user1234`
 
 ### Con Docker
 ```bash

@@ -24,9 +24,22 @@
 
 ---
 
-## FASE 1 — Estabilización
+## FASE 1 — Estabilización ✅ (completada 2026-10-08)
 
-**Objetivo:** builds en verde, arranque possible, eliminar riesgos evidentes. Sin nuevas features.
+**Objetivo:** builds en verde, arranque posible, eliminar riesgos evidentes. Sin nuevas features.
+
+**Resultado:** builds en verde y **backend arrancado y verificado en vivo** con BD nueva.
+
+- Migración duplicada: se renombró `V2__add_google_id_to_users.sql` → `V8__add_google_id_to_users.sql` (la duplicada era la de Google ID; `V2__align_cart_table_with_entity.sql` se mantiene porque entornos existentes ya la aplicaron como versión 2). Flyway aplica V1→V8 en BD limpia ✅.
+- `spring:` duplicado fusionado (C2); como efecto secundario el bloque OAuth2 con `client-id` vacío pasó a activo y rompía el arranque → **eliminado** temporalmente (dependencia en pom.xml conservada; se restaura con credenciales reales en Fase 3).
+- Seed restringido a `@Profile("dev")` y sin loguear credenciales; compose con `SPRING_PROFILES_ACTIVE` (C5).
+- Bypass de Google eliminado en backend y frontend (C3); errores TS/lint de `Login.tsx`/`Register.tsx` resueltos con esa eliminación (C8) — lint 0 errores.
+- Pagos: ownership de pedido (404), idempotencia (no re-procesar pagado), `PaymentRequest` sin datos de tarjeta (C4/C7 parcial) y Checkout sin PAN (F11) ✅.
+- Quick wins: `@Valid` en 7 PUT sin validar, null-checks → 401 en `/api/auth/me` y `/api/reviews/check` (B-M7/B-M8), CORS desde `FRONTEND_URL` (B-A10) ✅.
+- JDK 25 instalado (Temurin 25.0.1.8) y documentado (I-A7); `.gitignore` += `uploads/`.
+- **Verificación final:** `mvn test` 13/13 ✅, `npm run lint` 0 errores ✅, `npm run build` ✅. Smoke tests en vivo: arranque 4.7s, Flyway 8/8, productos/categorías 200, login user+admin con `type=Bearer`, `/me` y endpoint admin 200, sin token → 401, validación PUT → 400 con detalle, pago con pedido inexistente → 404 controlado, header CORS correcto.
+
+**Pendiente explícito:** C6 (rotar `JWT_SECRET` e limpiar historial git) — pospuesto, requiere coordinación; OAuth real (Fase 3); pasarela real (Fase 5).
 
 **Tareas:**
 1. Renumerar `V2__align_cart_table_with_entity.sql` → `V8__align_cart_table_with_entity.sql` (C1). *(V8 para no alterar checksums de migraciones ya aplicadas fuera de este entorno; verificar orden de aplicación.)*
