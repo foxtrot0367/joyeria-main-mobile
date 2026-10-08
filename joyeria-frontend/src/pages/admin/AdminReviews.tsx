@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import type { Review } from '../../types'
 import Skeleton from '../../components/Skeleton'
 import { formatDate } from '../../utils/format'
+import { getErrorMessage } from '../../utils/errors'
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState<Review[]>([])
@@ -26,9 +27,7 @@ export default function AdminReviews() {
       toast(status === 'APPROVED' ? 'Reseña aprobada' : 'Reseña rechazada', status === 'APPROVED' ? 'success' : 'info')
       load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al moderar'
+      const message = getErrorMessage(err, 'Error al moderar')
       toast(message || 'Error al moderar', 'error')
     }
   }

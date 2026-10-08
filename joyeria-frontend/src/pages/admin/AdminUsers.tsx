@@ -5,6 +5,7 @@ import type { User } from '../../types'
 import Skeleton from '../../components/Skeleton'
 import Pagination from '../../components/Pagination'
 import { formatDate } from '../../utils/format'
+import { getErrorMessage } from '../../utils/errors'
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>([])
@@ -27,9 +28,7 @@ export default function AdminUsers() {
   const changeRole = async (id: number, role: string) => {
     try { await adminService.updateUserRole(id, role); toast('Rol actualizado'); load() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al actualizar rol'
+      const message = getErrorMessage(err, 'Error al actualizar rol')
       toast(message || 'Error al actualizar rol', 'error')
     }
   }
@@ -40,9 +39,7 @@ export default function AdminUsers() {
       toast(user.active ? 'Usuario desactivado' : 'Usuario activado', 'info')
       load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al actualizar'
+      const message = getErrorMessage(err, 'Error al actualizar')
       toast(message || 'Error al actualizar', 'error')
     }
   }

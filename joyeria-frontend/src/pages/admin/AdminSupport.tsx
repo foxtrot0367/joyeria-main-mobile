@@ -6,6 +6,7 @@ import type { SupportTicket } from '../../types'
 import Skeleton from '../../components/Skeleton'
 import Pagination from '../../components/Pagination'
 import { formatDate, getStatusLabel, getStatusColor } from '../../utils/format'
+import { getErrorMessage } from '../../utils/errors'
 
 const statuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']
 
@@ -30,9 +31,7 @@ export default function AdminSupport() {
   const changeStatus = async (id: number, status: string) => {
     try { await adminService.updateTicketStatus(id, status); toast('Estado actualizado'); load() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al actualizar'
+      const message = getErrorMessage(err, 'Error al actualizar')
       toast(message || 'Error al actualizar', 'error')
     }
   }

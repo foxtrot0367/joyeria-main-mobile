@@ -4,6 +4,7 @@ import { LifeBuoy, Send, CheckCircle } from 'lucide-react'
 import { userService } from '../services/user.service'
 import { useToast } from '../contexts/ToastContext'
 import Button from '../components/Button'
+import { getErrorMessage } from '../utils/errors'
 
 const categories = ['Consulta de producto', 'Estado de pedido', 'Devolución o cambio', 'Pago y facturación', 'Otro']
 
@@ -21,9 +22,7 @@ export default function SupportPage() {
       setSent(true)
       toast('Ticket creado: te contactaremos pronto')
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al enviar el ticket'
+      const message = getErrorMessage(err, 'Error al enviar el ticket')
       toast(message || 'Error al enviar el ticket', 'error')
     } finally { setLoading(false) }
   }

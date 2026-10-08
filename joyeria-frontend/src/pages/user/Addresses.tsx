@@ -7,6 +7,7 @@ import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import UserNav from '../../components/UserNav'
 import Skeleton from '../../components/Skeleton'
+import { getErrorMessage } from '../../utils/errors'
 
 interface AddressForm {
   firstName: string
@@ -72,9 +73,7 @@ export default function Addresses() {
       setModal(false)
       load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al guardar la dirección'
+      const message = getErrorMessage(err, 'Error al guardar la dirección')
       toast(message || 'Error al guardar la dirección', 'error')
     } finally { setSaving(false) }
   }
@@ -85,9 +84,7 @@ export default function Addresses() {
       toast('Dirección eliminada', 'info')
       load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'No se pudo eliminar'
+      const message = getErrorMessage(err, 'No se pudo eliminar')
       toast(message || 'No se pudo eliminar', 'error')
     }
   }

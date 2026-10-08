@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import Button from '../components/Button'
+import { getErrorMessage } from '../utils/errors'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -23,9 +24,7 @@ export default function Login() {
       toast('¡Bienvenido de nuevo!')
       navigate('/')
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al iniciar sesión'
+      const message = getErrorMessage(err, 'Error al iniciar sesión')
       toast(message || 'Error al iniciar sesión', 'error')
     } finally { setLoading(false) }
   }

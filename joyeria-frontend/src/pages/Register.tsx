@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Mail, Lock, User, Phone } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { getErrorMessage } from '../utils/errors'
 import Button from '../components/Button'
 
 export default function Register() {
@@ -25,11 +26,10 @@ export default function Register() {
       toast('¡Cuenta creada exitosamente!')
       navigate('/')
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string; data?: { email?: string } } } }).response?.data?.message
-          || (err as { response?: { data?: { data?: { email?: string } } } }).response?.data?.data?.email
-        : 'Error al registrarse'
-      toast(message || 'Error al registrarse', 'error')
+      const emailError = err instanceof Error && 'response' in err
+        ? (err as { response?: { data?: { data?: { email?: string } } } }).response?.data?.data?.email
+        : undefined
+      toast(getErrorMessage(err, emailError || 'Error al registrarse'), 'error')
     } finally { setLoading(false) }
   }
 

@@ -6,6 +6,7 @@ import type { SocialLink } from '../../types'
 import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
+import { getErrorMessage } from '../../utils/errors'
 
 const empty: { name: string; url: string; icon: string; active: boolean; sortOrder: number } = { name: '', url: '', icon: 'instagram', active: true, sortOrder: 0 }
 
@@ -44,9 +45,7 @@ export default function AdminSocialLinks() {
       toast(editing ? 'Enlace actualizado' : 'Enlace creado')
       setModal(false); load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al guardar'
+      const message = getErrorMessage(err, 'Error al guardar')
       toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
@@ -55,9 +54,7 @@ export default function AdminSocialLinks() {
     if (!window.confirm('¿Eliminar este enlace?')) return
     try { await adminService.deleteSocialLink(id); toast('Enlace eliminado', 'info'); load() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'No se pudo eliminar'
+      const message = getErrorMessage(err, 'No se pudo eliminar')
       toast(message || 'No se pudo eliminar', 'error')
     }
   }

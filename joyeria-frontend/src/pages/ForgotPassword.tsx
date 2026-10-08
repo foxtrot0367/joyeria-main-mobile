@@ -5,6 +5,7 @@ import { Mail, ArrowLeft } from 'lucide-react'
 import { useToast } from '../contexts/ToastContext'
 import { authService } from '../services/auth.service'
 import Button from '../components/Button'
+import { getErrorMessage } from '../utils/errors'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -20,9 +21,7 @@ export default function ForgotPassword() {
       setSent(true)
       toast(message)
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al enviar la solicitud'
+      const message = getErrorMessage(err, 'Error al enviar la solicitud')
       toast(message || 'Error al enviar la solicitud', 'error')
     } finally { setLoading(false) }
   }

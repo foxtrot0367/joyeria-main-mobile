@@ -5,6 +5,7 @@ import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { useToast } from '../contexts/ToastContext'
 import { authService } from '../services/auth.service'
 import Button from '../components/Button'
+import { getErrorMessage } from '../utils/errors'
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams()
@@ -27,9 +28,7 @@ export default function ResetPassword() {
       setDone(true)
       toast(message)
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'El enlace es inválido o expiró'
+      const message = getErrorMessage(err, 'El enlace es inválido o expiró')
       toast(message || 'El enlace es inválido o expiró', 'error')
     } finally { setLoading(false) }
   }
