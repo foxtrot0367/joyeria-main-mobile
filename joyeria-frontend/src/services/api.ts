@@ -24,7 +24,6 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
       if (window.location.pathname !== '/login') {
         window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
       }

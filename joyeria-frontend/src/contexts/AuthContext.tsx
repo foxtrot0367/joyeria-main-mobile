@@ -41,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData)
     } catch {
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
       setUser(null)
     } finally {
       setLoading(false)
@@ -57,9 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authService.login(email, password)
       localStorage.setItem('token', res.token)
-      localStorage.setItem('user', JSON.stringify({
-        id: res.id, email: res.email, fullName: res.fullName, role: res.role
-      }))
       setUser({ id: res.id, email: res.email, firstName: res.fullName.split(' ')[0],
         lastName: res.fullName.split(' ').slice(1).join(' '),
         role: res.role as 'USER' | 'ADMIN', active: true } as User)
@@ -83,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem('token')
-    localStorage.removeItem('user')
     setUser(null)
   }, [])
 
