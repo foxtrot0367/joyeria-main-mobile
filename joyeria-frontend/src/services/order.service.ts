@@ -33,8 +33,9 @@ export const orderService = {
     return data.data
   },
 
-  async getAllOrders(page = 0, size = 20): Promise<PagedResponse<Order>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<Order>>>('/admin/orders', { params: { page, size } })
+  async getAllOrders(page = 0, size = 20, status?: string): Promise<PagedResponse<Order>> {
+    const url = status ? `/admin/orders/status/${status}` : '/admin/orders'
+    const { data } = await api.get<ApiResponse<PagedResponse<Order>>>(url, { params: { page, size } })
     return data.data
   },
 

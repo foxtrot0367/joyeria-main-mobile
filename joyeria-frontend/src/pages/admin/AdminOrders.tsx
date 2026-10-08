@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { adminService } from '../../services/admin.service'
+import { orderService } from '../../services/order.service'
 import { useToast } from '../../contexts/ToastContext'
 import type { Order } from '../../types'
 import Skeleton from '../../components/Skeleton'
 import Pagination from '../../components/Pagination'
 import { formatPrice, formatDate, getStatusLabel } from '../../utils/format'
+import { getErrorMessage } from '../../utils/errors'
 
 const statuses = ['PENDING', 'PAID', 'PREPARING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
 
@@ -21,7 +22,7 @@ export default function AdminOrders() {
   const load = async () => {
     setLoading(true)
     try {
-      const data = await adminService.getOrders(page, 20, filter || undefined)
+      const data = await orderService.getAllOrders(page, 20, filter || undefined)
       setOrders(data.content); setTotalPages(data.totalPages)
     } catch { setOrders([]); setTotalPages(0) }
     finally { setLoading(false) }
@@ -29,13 +30,11 @@ export default function AdminOrders() {
 
   const changeStatus = async (id: number, status: string) => {
     try {
-      await adminService.updateOrderStatus(id, status)
+      await orderService.updateStatus(id, status)
       toast('Estado actualizado')
       load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al actualizar'
+      const message = getErrorMessage(err, 'Error al actualizar')
       toast(message || 'Error al actualizar', 'error')
     }
   }

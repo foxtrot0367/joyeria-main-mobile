@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingCart, DollarSign, Package, Users, AlertTriangle, Clock } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
+import { orderService } from '../../services/order.service'
 import type { DashboardStats, Order } from '../../types'
 import Skeleton from '../../components/Skeleton'
 import { formatPrice, formatDate, getStatusLabel, getStatusColor } from '../../utils/format'
@@ -12,7 +13,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([adminService.getStats(), adminService.getOrders(0, 6)])
+    Promise.all([adminService.getStats(), orderService.getAllOrders(0, 6)])
       .then(([s, o]) => { setStats(s); setRecentOrders(o.content); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])

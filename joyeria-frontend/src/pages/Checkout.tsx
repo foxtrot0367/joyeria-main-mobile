@@ -6,9 +6,11 @@ import { useCart } from '../contexts/CartContext'
 import { useToast } from '../contexts/ToastContext'
 import { orderService } from '../services/order.service'
 import { paymentService } from '../services/misc.service'
-import { couponService } from '../services/misc.service'
+import { couponService } from '../services/coupon.service'
 import Button from '../components/Button'
 import { formatPrice } from '../utils/format'
+import { getErrorMessage } from '../utils/errors'
+import { calculateShipping } from '../utils/shipping'
 import type { Coupon } from '../types'
 
 export default function Checkout() {
@@ -43,14 +45,11 @@ export default function Checkout() {
       await paymentService.processPayment({ orderId: order.id, paymentMethod: payment.method })
       navigate(`/pedido-confirmado/${order.orderNumber}`)
     } catch (err: unknown) {
-      const response = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string; data?: string } } }).response?.data
-        : undefined
-      toast(response?.message || 'Error al procesar el pago', 'error')
+      toast(getErrorMessage(err, 'Error al procesar el pago'), 'error')
     } finally { setLoading(false) }
   }
 
-  const shippingCost = (cart?.subtotal || 0) >= 500000 ? 0 : 15000
+  const shippingCost = calculateShipping(cart?.subtotal || 0)
   let discount = 0
   if (couponApplied) {
     discount = couponApplied.discountType === 'PERCENTAGE'

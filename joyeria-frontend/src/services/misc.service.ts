@@ -1,5 +1,5 @@
 import api from './api'
-import type { ApiResponse, SocialLink, Coupon } from '../types'
+import type { ApiResponse, SocialLink } from '../types'
 
 export interface PaymentRequest {
   orderId: number
@@ -26,13 +26,6 @@ export const newsletterService = {
   async subscribe(email: string): Promise<string> {
     const { data } = await api.post<ApiResponse<string>>('/newsletter/subscribe', { email })
     return data.message || data.data
-  },
-}
-
-export const couponService = {
-  async validate(code: string): Promise<Coupon> {
-    const { data } = await api.post<ApiResponse<Coupon>>(`/coupons/validate`, null, { params: { code } })
-    return data.data
   },
 }
 

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Ticket } from 'lucide-react'
-import { adminService } from '../../services/admin.service'
+import { couponService } from '../../services/coupon.service'
 import { useToast } from '../../contexts/ToastContext'
 import type { Coupon } from '../../types'
 import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
 import { formatDate, formatPrice } from '../../utils/format'
+import { getErrorMessage } from '../../utils/errors'
 
 const empty: {
   code: string; description: string; discountType: 'PERCENTAGE' | 'FIXED'; discountValue: string
@@ -27,7 +28,7 @@ export default function AdminCoupons() {
 
   const load = async () => {
     setLoading(true)
-    try { setCoupons(await adminService.getCoupons()) } catch { setCoupons([]) }
+    try { setCoupons(await couponService.getAll()) } catch { setCoupons([]) }
     finally { setLoading(false) }
   }
 
@@ -59,25 +60,21 @@ export default function AdminCoupons() {
       validUntil: form.validUntil ? new Date(form.validUntil).toISOString() : null,
     }
     try {
-      if (editing) await adminService.updateCoupon(editing.id, payload)
-      else await adminService.createCoupon(payload)
+      if (editing) await couponService.update(editing.id, payload)
+      else await couponService.create(payload)
       toast(editing ? 'Cupón actualizado' : 'Cupón creado')
       setModal(false); load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al guardar'
+      const message = getErrorMessage(err, 'Error al guardar')
       toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
 
   const remove = async (id: number) => {
     if (!window.confirm('¿Eliminar este cupón?')) return
-    try { await adminService.deleteCoupon(id); toast('Cupón eliminado', 'info'); load() }
+    try { await couponService.delete(id); toast('Cupón eliminado', 'info'); load() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'No se pudo eliminar'
+      const message = getErrorMessage(err, 'No se pudo eliminar')
       toast(message || 'No se pudo eliminar', 'error')
     }
   }

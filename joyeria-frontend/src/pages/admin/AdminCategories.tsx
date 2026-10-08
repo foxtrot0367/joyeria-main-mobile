@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, FolderTree } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
+import { categoryService } from '../../services/category.service'
 import { useToast } from '../../contexts/ToastContext'
 import type { Category } from '../../types'
 import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
+import { getErrorMessage } from '../../utils/errors'
 
 const empty: { name: string; description: string; displayOrder: number; image: string; active: boolean } = { name: '', description: '', displayOrder: 0, image: '', active: true }
 
@@ -20,7 +22,7 @@ export default function AdminCategories() {
 
   const load = async () => {
     setLoading(true)
-    try { setCategories(await adminService.getCategories()) } catch { setCategories([]) }
+    try { setCategories(await categoryService.getAll()) } catch { setCategories([]) }
     finally { setLoading(false) }
   }
 
@@ -42,9 +44,7 @@ export default function AdminCategories() {
       toast(editing ? 'Categoría actualizada' : 'Categoría creada')
       setModal(false); load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al guardar'
+      const message = getErrorMessage(err, 'Error al guardar')
       toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
@@ -53,9 +53,7 @@ export default function AdminCategories() {
     if (!window.confirm('¿Eliminar esta categoría?')) return
     try { await adminService.deleteCategory(id); toast('Categoría eliminada', 'info'); load() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'No se pudo eliminar'
+      const message = getErrorMessage(err, 'No se pudo eliminar')
       toast(message || 'No se pudo eliminar', 'error')
     }
   }

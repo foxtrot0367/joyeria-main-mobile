@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Gem } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
+import { materialService } from '../../services/material.service'
 import { useToast } from '../../contexts/ToastContext'
 import type { Material } from '../../types'
 import Button from '../../components/Button'
 import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
+import { getErrorMessage } from '../../utils/errors'
 
 const empty: { name: string; description: string; image: string; active: boolean } = { name: '', description: '', image: '', active: true }
 
@@ -20,7 +22,7 @@ export default function AdminMaterials() {
 
   const load = async () => {
     setLoading(true)
-    try { setMaterials(await adminService.getMaterials()) } catch { setMaterials([]) }
+    try { setMaterials(await materialService.getAll()) } catch { setMaterials([]) }
     finally { setLoading(false) }
   }
 
@@ -42,9 +44,7 @@ export default function AdminMaterials() {
       toast(editing ? 'Material actualizado' : 'Material creado')
       setModal(false); load()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'Error al guardar'
+      const message = getErrorMessage(err, 'Error al guardar')
       toast(message || 'Error al guardar', 'error')
     } finally { setSaving(false) }
   }
@@ -53,9 +53,7 @@ export default function AdminMaterials() {
     if (!window.confirm('¿Eliminar este material?')) return
     try { await adminService.deleteMaterial(id); toast('Material eliminado', 'info'); load() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'No se pudo eliminar'
+      const message = getErrorMessage(err, 'No se pudo eliminar')
       toast(message || 'No se pudo eliminar', 'error')
     }
   }

@@ -4,6 +4,7 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react'
 import { useCart } from '../contexts/CartContext'
 import Button from '../components/Button'
 import { formatPrice } from '../utils/format'
+import { calculateShipping, FREE_SHIPPING_THRESHOLD } from '../utils/shipping'
 
 export default function CartPage() {
   const { cart, updateQuantity, removeItem } = useCart()
@@ -22,7 +23,7 @@ export default function CartPage() {
     )
   }
 
-  const shipping = cart.subtotal >= 500000 ? 0 : 15000
+  const shipping = calculateShipping(cart.subtotal)
   const total = cart.subtotal + shipping
 
   return (
@@ -65,7 +66,7 @@ export default function CartPage() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-foreground-faint">Subtotal</span><span className="font-medium">{formatPrice(cart.subtotal)}</span></div>
               <div className="flex justify-between"><span className="text-foreground-faint">Envío</span><span className="font-medium">{shipping === 0 ? <span className="text-accent-green">Gratis</span> : formatPrice(shipping)}</span></div>
-              {shipping > 0 && <p className="text-xs text-foreground-faint">Envío gratis en compras superiores a {formatPrice(500000)}</p>}
+              {shipping > 0 && <p className="text-xs text-foreground-faint">Envío gratis en compras superiores a {formatPrice(FREE_SHIPPING_THRESHOLD)}</p>}
               <div className="border-t border-line/70 pt-3 flex justify-between text-base">
                 <span className="font-medium text-foreground">Total</span>
                 <span className="font-bold text-[#C9A227]">{formatPrice(total)}</span>

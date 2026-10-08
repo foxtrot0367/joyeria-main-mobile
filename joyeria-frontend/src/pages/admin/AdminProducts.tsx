@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Star, BadgePercent, Sparkles } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
+import { productService } from '../../services/product.service'
+import { categoryService } from '../../services/category.service'
+import { materialService } from '../../services/material.service'
 import { useToast } from '../../contexts/ToastContext'
 import type { Product, Category, Material } from '../../types'
 import Button from '../../components/Button'
@@ -8,6 +11,7 @@ import Modal from '../../components/Modal'
 import Skeleton from '../../components/Skeleton'
 import Pagination from '../../components/Pagination'
 import { formatPrice } from '../../utils/format'
+import { getErrorMessage } from '../../utils/errors'
 
 const empty = {
   name: '', description: '', price: '', comparePrice: '', sku: '', stock: '',
@@ -31,7 +35,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([adminService.getProducts(page, 20), adminService.getCategories(), adminService.getMaterials()])
+    Promise.all([productService.getAll({ page, size: 20 }), categoryService.getAll(), materialService.getAll()])
       .then(([p, c, m]) => {
         setProducts(p.content); setTotalPages(p.totalPages); setCategories(c); setMaterials(m)
       })
@@ -74,11 +78,7 @@ export default function AdminProducts() {
       setModal(false)
       reload()
     } catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string; data?: string } } }).response?.data?.message
-          || (err as { response?: { data?: { data?: string } } }).response?.data?.data
-        : 'Error al guardar'
-      toast(message || 'Error al guardar', 'error')
+      toast(getErrorMessage(err, 'Error al guardar'), 'error')
     } finally { setSaving(false) }
   }
 
@@ -86,15 +86,13 @@ export default function AdminProducts() {
     if (!window.confirm('¿Eliminar este producto?')) return
     try { await adminService.deleteProduct(id); toast('Producto eliminado', 'info'); reload() }
     catch (err: unknown) {
-      const message = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : 'No se pudo eliminar'
+      const message = getErrorMessage(err, 'No se pudo eliminar')
       toast(message || 'No se pudo eliminar', 'error')
     }
   }
 
   const reload = async () => {
-    const p = await adminService.getProducts(page, 20)
+    const p = await productService.getAll({ page, size: 20 })
     setProducts(p.content); setTotalPages(p.totalPages)
   }
 

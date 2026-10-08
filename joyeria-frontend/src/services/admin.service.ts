@@ -1,7 +1,7 @@
 import api from './api'
 import type {
-  ApiResponse, User, Product, Category, Material, Review, Order,
-  PagedResponse, DashboardStats, Coupon, SocialLink, SupportTicket,
+  ApiResponse, User, Product, Category, Material, Review,
+  PagedResponse, DashboardStats, SocialLink, SupportTicket,
 } from '../types'
 
 export interface ProductCreateRequest {
@@ -32,17 +32,6 @@ export interface MaterialCreateRequest {
   image?: string
 }
 
-export interface CouponCreateRequest {
-  code: string
-  description?: string
-  discountType: 'PERCENTAGE' | 'FIXED'
-  discountValue: number
-  minAmount?: number | null
-  maxUses?: number | null
-  validFrom?: string | null
-  validUntil?: string | null
-}
-
 export interface SocialLinkCreateRequest {
   name: string
   url: string
@@ -57,10 +46,6 @@ export const adminService = {
   },
 
   // Products
-  async getProducts(page = 0, size = 50): Promise<PagedResponse<Product>> {
-    const { data } = await api.get<ApiResponse<PagedResponse<Product>>>('/products', { params: { page, size } })
-    return data.data
-  },
   async createProduct(product: ProductCreateRequest): Promise<Product> {
     const { data } = await api.post<ApiResponse<Product>>('/admin/products', product)
     return data.data
@@ -74,10 +59,6 @@ export const adminService = {
   },
 
   // Categories
-  async getCategories(): Promise<Category[]> {
-    const { data } = await api.get<ApiResponse<Category[]>>('/categories')
-    return data.data
-  },
   async createCategory(category: CategoryCreateRequest): Promise<Category> {
     const { data } = await api.post<ApiResponse<Category>>('/categories', category)
     return data.data
@@ -91,10 +72,6 @@ export const adminService = {
   },
 
   // Materials
-  async getMaterials(): Promise<Material[]> {
-    const { data } = await api.get<ApiResponse<Material[]>>('/materials')
-    return data.data
-  },
   async createMaterial(material: MaterialCreateRequest): Promise<Material> {
     const { data } = await api.post<ApiResponse<Material>>('/materials', material)
     return data.data
@@ -105,17 +82,6 @@ export const adminService = {
   },
   async deleteMaterial(id: number): Promise<void> {
     await api.delete(`/materials/${id}`)
-  },
-
-  // Orders
-  async getOrders(page = 0, size = 20, status?: string): Promise<PagedResponse<Order>> {
-    const url = status ? `/admin/orders/status/${status}` : '/admin/orders'
-    const { data } = await api.get<ApiResponse<PagedResponse<Order>>>(url, { params: { page, size } })
-    return data.data
-  },
-  async updateOrderStatus(id: number, status: string): Promise<Order> {
-    const { data } = await api.put<ApiResponse<Order>>(`/admin/orders/${id}/status`, null, { params: { status } })
-    return data.data
   },
 
   // Users
@@ -146,23 +112,6 @@ export const adminService = {
   async updateTicketStatus(id: number, status: string): Promise<SupportTicket> {
     const { data } = await api.put<ApiResponse<SupportTicket>>(`/admin/support/tickets/${id}/status`, null, { params: { status } })
     return data.data
-  },
-
-  // Coupons
-  async getCoupons(): Promise<Coupon[]> {
-    const { data } = await api.get<ApiResponse<Coupon[]>>('/coupons')
-    return data.data
-  },
-  async createCoupon(coupon: CouponCreateRequest): Promise<Coupon> {
-    const { data } = await api.post<ApiResponse<Coupon>>('/coupons', coupon)
-    return data.data
-  },
-  async updateCoupon(id: number, coupon: CouponCreateRequest): Promise<Coupon> {
-    const { data } = await api.put<ApiResponse<Coupon>>(`/coupons/${id}`, coupon)
-    return data.data
-  },
-  async deleteCoupon(id: number): Promise<void> {
-    await api.delete(`/coupons/${id}`)
   },
 
   // Social links
