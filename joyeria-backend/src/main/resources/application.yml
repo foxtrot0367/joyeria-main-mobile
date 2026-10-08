@@ -37,6 +37,10 @@ jwt:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   upload-dir: ${UPLOAD_DIR:uploads}
+  security:
+    # IPs o CIDR (ej. 172.16.0.0/12) de proxies autorizados a enviar X-Forwarded-For.
+    # Vacío = nunca confiar en X-Forwarded-For (se usa la IP real de conexión).
+    trusted-proxies: ${TRUSTED_PROXIES:}
 
 payment:
   provider: ${PAYMENT_PROVIDER:sandbox}
