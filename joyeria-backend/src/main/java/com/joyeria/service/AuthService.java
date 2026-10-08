@@ -51,11 +51,9 @@ public class AuthService {
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new IllegalArgumentException("Las contraseñas no coinciden");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("El email ya está registrado");
-        }
-        if (userRepository.existsByPhone(request.getPhone())) {
-            throw new IllegalArgumentException("El teléfono ya está registrado");
+        if (userRepository.existsByEmail(request.getEmail()) || userRepository.existsByPhone(request.getPhone())) {
+            throw new IllegalArgumentException(
+                    "No se pudo crear la cuenta con esos datos. Si ya tienes una cuenta, inicia sesión.");
         }
 
         User user = new User();

@@ -82,7 +82,7 @@ export default function Register() {
               <label className="block text-sm text-foreground-muted mb-1.5">Contraseña</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-faint" />
-                <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} required minLength={8} className={input} placeholder="Mín. 8 caracteres" />
+                <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} required minLength={8} pattern="(?=.*[A-Za-z])(?=.*\d).+" title="Debe contener al menos una letra y un número" className={input} placeholder="Mín. 8 caracteres, letra y número" />
               </div>
             </div>
             <div>

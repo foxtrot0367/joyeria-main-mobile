@@ -2,6 +2,7 @@ package com.joyeria.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +21,8 @@ public class RegisterRequest {
     @NotBlank @Size(max = 20)
     private String phone;
     @NotBlank @Size(min = 8, max = 128)
+    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
+            message = "Debe contener al menos una letra y un número")
     private String password;
     @NotBlank
     private String confirmPassword;

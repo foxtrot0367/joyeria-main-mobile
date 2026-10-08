@@ -95,7 +95,7 @@ export default function Profile() {
             </div>
             <div>
               <label className="block text-xs font-medium text-foreground-faint mb-1">Nueva contraseña</label>
-              <input type="password" value={passwords.newPassword} onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })} required minLength={8} className={input} />
+              <input type="password" value={passwords.newPassword} onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })} required minLength={8} pattern="(?=.*[A-Za-z])(?=.*\d).+" title="Debe contener al menos una letra y un número" className={input} />
             </div>
             <div>
               <label className="block text-xs font-medium text-foreground-faint mb-1">Confirmar nueva contraseña</label>
