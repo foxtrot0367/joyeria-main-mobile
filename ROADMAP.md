@@ -1,0 +1,207 @@
+# ROADMAP.md — Plan de modernización por fases
+
+**Proyecto:** Joyería — e-commerce full stack
+**Base:** AUDIT.md (auditoría del 2026-10-08)
+**Regla:** no avanzar a una fase sin autorización explícita y sin que la anterior deje el proyecto sin errores críticos.
+
+---
+
+## Principios de ejecución
+
+- Commits pequeños y descriptivos (`feat(auth): ...`, `fix(cart): ...`).
+- Tras cada cambio importante: compilar, tests, lint, revisar regresiones.
+- No romper contratos API existentes sin migración frontend+backend coordinada.
+- No eliminar funcionalidades sin justificación documentada.
+- No añadir dependencias sin pasar el checklist del prompt (§39).
+- Si un cambio rompe algo: **detener y corregir** antes de continuar.
+
+---
+
+## FASE 0 — Auditoría ✅ (completada 2026-10-08)
+
+**Resultado:** `AUDIT.md`, `ROADMAP.md`, `ARCHITECTURE.md`.
+**Verificación dinámica:** lint frontend con 3 errores, build frontend con 2 errores TS, backend no compila (JDK 17 < 25 requerido), Docker no instalado localmente.
+
+---
+
+## FASE 1 — Estabilización
+
+**Objetivo:** builds en verde, arranque possible, eliminar riesgos evidentes. Sin nuevas features.
+
+**Tareas:**
+1. Renumerar `V2__align_cart_table_with_entity.sql` → `V8__align_cart_table_with_entity.sql` (C1). *(V8 para no alterar checksums de migraciones ya aplicadas fuera de este entorno; verificar orden de aplicación.)*
+2. Fusionar el bloque `spring:` duplicado en `application.yml` (C2).
+3. Frontend: corregir 2 errores TS de `Login.tsx` (`window.google`) y 3 errores de lint (C8).
+4. Decidir e instalar entorno backend: JDK 25 (recomendado, mantiene `pom.xml`) o bajar `java.version` a 17/21. Documentar en README. (I-A7)
+5. Deshabilitar/condicionar `DataInitializer`: `@Profile("dev")` + no loguear credenciales (C5).
+6. Retirar el bypass `POST /api/auth/google` hasta implementar verificación real (C3) — desactivar endpoint + frontend, sin romper login clásico.
+7. `PaymentService`: no marcar pedidos como pagados sin pasarela + exigir ownership (C4, mitigación mínima de Fase 1; integración completa en Fase 5).
+8. Quitar `cardNumber`/`cvv`/`expiry` del flujo frontend→backend (C7 parcial: superficie PCI).
+9. Corregir quick wins de seguridad: CORS con `FRONTEND_URL` (B-A10), `@Valid` faltantes (B-M7), null-check de `Authentication` en `/auth/me` y `/reviews/check` (B-M8).
+10. `.gitignore`: añadir `uploads/`.
+11. Ejecutar: `mvn test`, `npm run lint`, `npm run build`.
+
+**Archivos afectados:** `application.yml`, migración V2→V8, `Login.tsx`, `DataInitializer.java`, `AuthController.java`/`SecurityConfig.java`, `PaymentService.java`/`PaymentController.java`, `Checkout.tsx`, `misc.service.ts`, controllers con PUT sin `@Valid`, `.gitignore`.
+**Riesgos:** la renumeración Flyway puede afectar BDs que ya aplicaron un V2 (verificar `flyway_schema_history` en cada entorno); retirar el endpoint Google afecta al frontend (coordinar en mismo commit).
+**Criterio de salida:** `mvn test` ✅, `npm run lint` ✅, `npm run build` ✅, backend arranca con BD nueva, sin hallazgos críticos abiertos de AUDIT.md §3 (excepto C6, que requiere coordinación).
+
+---
+
+## FASE 2 — Arquitectura
+
+**Objetivo:** limpieza estructural sin cambiar comportamiento visible.
+
+**Tareas:**
+1. Backend: eliminar código muerto (`SearchRequest`, `validateCouponForOrder`→integrarlo, `createGuestTicket`, `Cart.sessionId`, columnas huérfanas vía migración V9 si aplica).
+2. Unificar CORS: eliminar `@CrossOrigin` de 17 controllers, usar solo `CorsConfigurationSource` (B-M15).
+3. Completar `GlobalExceptionHandler` (405/415/400 de tipo, sin cast ciego a `FieldError`) + error handler de seguridad con JSON (B-M5).
+4. Frontend: extraer `getErrorMessage()` a `utils` (F-M5), constantes de envío compartidas (F-M4), deduplicar servicios admin vs entidad (F-M6).
+5. Frontend: hooks personalizados para datos (`useAbortableFetch`) y estados de carga (F-M3).
+6. Frontend: `ErrorBoundary` a nivel App (F-A3).
+7. Interceptor 401 sin `window.location`: evento + redirección controlada con mensaje (F-A2).
+8. Ordenar `tsconfig` (`noUnusedLocals` cuando sea viable, incluir `vite.config.ts`), declarar `@eslint/js`.
+9. Eliminar código muerto: `SearchBar.tsx`, `ProductTurntable.tsx`, `three`, `@types/three`, estado `localStorage['user']`.
+
+**Riesgos:** refactor de servicios frontend toca muchas páginas → verificar rutas manualmente tras cambios; nada de cambios de contratos API.
+**Criterio de salida:** builds/tests/lint en verde; ningún endpoint cambia de contrato; código muerto eliminado; comportamiento idéntico.
+
+---
+
+## FASE 3 — Seguridad
+
+**Objetivo:** autenticación robusta y autorización correcta.
+
+**Tareas:**
+1. Google OAuth real: `.oauth2Login()` o verificación de `id_token` con `GoogleIdTokenVerifier`; eliminar el flujo que confía en datos del cliente (C3, B-A1, B-A2). Requiere `GOOGLE_CLIENT_ID/SECRET` — **si no existen, informar y dejar el flujo deshabilitado documentado**.
+2. Refresh tokens con rotación + logout real + invalidación al cambiar contraseña (B-M12).
+3. IDOR tickets de soporte: ownership en lectura/escritura (B-A3).
+4. Cookies de sesión/token: evaluar mover JWT de `localStorage` a cookie `httpOnly`+`Secure`+`SameSite` (F-A4) — decisión de arquitectura, documentar impacto.
+5. Cabeceras de seguridad en `nginx.conf` (CSP, HSTS, X-Frame-Options, Referrer-Policy, gzip) (I-M1, F-A4).
+6. Rate limit: no confiar en `X-Forwarded-For` sin proxy de confianza; corregir regla de cupones; limpieza determinista (I-A4, B-M1).
+7. Rotación JWT_SECRET + limpieza de historial git (C6) — **requiere tu autorización explícita por reescribir historia**.
+8. `DataInitializer` solo dev + política de contraseñas + mensajes uniformes (enumeración) (C5, B5).
+9. Reseñas: moderación por defecto + verificar compra (B-A5).
+
+**Riesgos:** cambios en el flujo de auth afectan todas las sesiones; el paso a cookies httpOnly exige ajustar el interceptor axios; rotar el secreto invalida tokens vigentes.
+**Criterio de salida:** sin bypass de auth; sin IDOR en endpoints existentes; logout real funcional; tests de seguridad backend añadidos.
+
+---
+
+## FASE 4 — E-commerce
+
+**Objetivo:** catálogo, carrito, checkout y pedidos sólidos.
+
+**Tareas:**
+1. Catálogo: topes de `page/size`, `sort` whitelist, índices/búsqueda eficiente (B-M3), paginación real verificada, filtros combinados.
+2. Carrito: validar stock acumulado (B3), deshabilitar "−" en cantidad 1, respetar `loading`, manejar errores de acciones (F-M1, B-B3).
+3. Checkout: forms con validación real, bloquear saltos de paso, validación antes de crear pedido, resumen con totales calculados por backend (C7).
+4. Cupones: invocar `validateCouponForOrder` con fechas/límites/monto mínimo en `createOrder` (B-A7).
+5. Stock: `@Version` o bloqueo pessimista (B-A6).
+6. Pedidos: estados + timeline visual en frontend; corregir métricas de dashboard (B-M11) — el dashboard visual completo es Fase 6.
+7. Favoritos: mover al carrito, detectar stock (F-M9 parcial).
+8. Email transaccional real (o deshabilitar el flujo con mensajes honestos): reset (B-A4), confirmación de pedido (Fase 4/5).
+9. Precios: backend como única fuente de verdad — recalcular totales en `createOrder` (verificar que ya lo hace y que checkout no envía totales).
+
+**Criterio de salida:** flujo invitado→registro→catálogo→carrito→checkout→pedido funciona extremo a extremo con BD local; sin `quantity: 0`; cupones validados; sin sobreventa lógica.
+
+---
+
+## FASE 5 — Pagos
+
+**Objetivo:** integración Mercado Pago real (checkout pro + webhook).
+
+**Tareas:**
+1. Backend: crear preferencia de pago en MP; estados de pago con idempotencia; webhook con verificación de firma; reconciliación de montos (C4 completo).
+2. Eliminar `PaymentRequest` con datos de tarjeta; usar tokenización MP en frontend (Elements/Checkout Pro) (C7 PCI).
+3. Endpoint `/api/payments/webhook/**` implementado (hoy es 404 huérfano).
+4. Estados: `PENDING→PAID→...` sincronizados con MP; manejo de rechazos/chargebacks.
+5. Sandbox: **requiere credenciales `MERCADOPAGO_*`** — si no las hay, implementar contra sandbox con las keys que aportes; sin ellas, dejar integración preparada y documentada (no inventar credenciales).
+
+**Criterio de salida:** flujo de pago sandbox verificado de extremo a extremo; webhook actualiza pedido; sin posibilidad de marcar pagado sin pasarela.
+
+---
+
+## FASE 6 — Admin
+
+**Objetivo:** dashboard con métricas correctas y CRUDs profesionales.
+
+**Tareas:**
+1. Dashboard: ventas del día/mes (solo pedidos pagados), pedidos, clientes, top productos, stock bajo — corrigiendo B-M11.
+2. CRUD productos con imágenes (subida → Cloudinary si hay credenciales; si no, subida local a `uploads/` con volumen).
+3. Pedidos: cambiar estado con máquina de estados, vista de detalle con cliente y productos.
+4. Usuarios: roles, activar/desactivar, proteger último admin (B-B2).
+5. Soporte admin: responder tickets (hoy no existe endpoint — B-M6) + ver respuestas en cliente.
+6. Reseñas: moderación funcional.
+
+**Criterio de salida:** el admin puede operar el ciclo completo de negocio sin tocar BD; métricas cuadran con datos reales.
+
+---
+
+## FASE 7 — UI/UX
+
+**Objetivo:** dirección visual premium de joyería (elegante, minimalista, editorial; dorado como acento).
+
+**Tareas:** rediseño progresivo por páginas: Home → catálogo → producto → carrito → checkout → perfil → admin. Tipografía, whitespace, jerarquía, microinteracciones suaves, cards consistentes. Corregir: rating fabricado (F-M9), imágenes sin fallback (F-M8), modal accesible (F-M13), `document.title` por ruta (F-M10), newsletter real (F-M7), NotFound dentro del layout.
+
+**Riesgo:** no romper funcionalidad existente al tocar componentes; verificar cada página tras rediseñarla.
+
+---
+
+## FASE 8 — Mobile
+
+**Objetivo:** experiencia diseñada para móvil (360–430px), no adaptada.
+
+**Tareas:** sidebar admin responsive con hamburguesa (F-A5); revisar navbar, búsqueda, cards, carrito, checkout, formularios, modales; eliminar overflow horizontal; targets táctiles ≥44px; quick view accesible en móvil; `loading="lazy"` (F-M14).
+
+**Criterio de salida:** verificación manual en 360/375/390/430px de todas las rutas públicas, cliente y admin; sin overflow ni elementos cortados.
+
+---
+
+## FASE 9 — Performance
+
+**Objetivo:** optimización medida, sin premature optimization.
+
+**Tareas:** revisar N+1 (B-M2), OSIV off + `@Transactional`/`JOIN FETCH` (B-M4), índices (B-B6), tamaños de página; frontend: debounce de búsqueda, memo donde aporte, imágenes responsive/WebP (Cloudinary si hay credenciales), revisar chunks. Medir antes/después.
+
+---
+
+## FASE 10 — Testing
+
+**Objetivo:** cobertura de comportamiento crítico.
+
+**Tareas:** backend — tests de `OrderService` (camino feliz), `PaymentService`, validación de cupones, controllers MockMvc, seguridad (ownership/roles); migraciones con Testcontainers o H2+Flyway; JaCoCo. Frontend — instalar Vitest, tests de `authService`/`CartContext`/componentes clave. E2E mínimo (Playwright): registro→login→producto→carrito→checkout→pedido.
+
+**Criterio de salida:** `mvn test` con cobertura de los flujos críticos; al menos un E2E del camino feliz.
+
+---
+
+## FASE 11 — CI/CD
+
+**Objetivo:** GitHub Actions en cada PR.
+
+**Tareas:** workflow con install → lint → tests → build frontend → build backend → (opcional) docker build. Branch protection documentado. Opcional: dependency review.
+
+**Nota:** la rama `main` actual ya falla lint/build — el workflow debe quedar en verde tras Fase 1.
+
+---
+
+## FASE 12 — Producción
+
+**Objetivo:** despliegue real con seguridad perimetral.
+
+**Tareas:** perfiles dev/prod en compose (exponer solo 80/443, no 5432/8080), TLS (certbot/traefik o Caddy), `.env` con secretos fuertes, volumen `uploads`, healthchecks correctos (actuator `/actuator/health` — requiere añadir starter), logs estructurados sin DEBUG, backups de Postgres, README completo (I-M5), LICENSE, rotación de secretos verificada (C6), Spring Boot 4.x (B-A8) como decisión explícita.
+
+---
+
+## Resumen de dependencias entre fases
+
+```
+0 auditoría → 1 estabilización → 2 arquitectura → 3 seguridad
+                                    ↘ 4 e-commerce → 5 pagos → 6 admin
+                                                    ↘ 7 UI/UX → 8 mobile → 9 performance
+                     10 testing (paralelo desde Fase 3) → 11 CI/CD → 12 producción
+```
+
+- **Fase 1 es bloqueante** para todo lo demás (nada compila hoy).
+- CI/CD (11) solo tiene sentido con builds en verde (Fase 1) — puede adelantarse a continuación de Fase 2 si lo deseas.
+- Testing (10) puede iniciar en paralelo desde Fase 3.
