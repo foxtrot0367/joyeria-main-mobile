@@ -21,28 +21,43 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProductService {
 
+    private static final int MAX_PAGE_SIZE = 50;
+    private static final Set<String> SORT_FIELDS =
+            Set.of("createdAt", "price", "comparePrice", "name", "soldCount", "stock");
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final MaterialRepository materialRepository;
     private final ProductImageRepository productImageRepository;
     private final ReviewRepository reviewRepository;
 
+    private Pageable buildPageable(int page, int size, String sort, String direction) {
+        if (page < 0) {
+            throw new IllegalArgumentException("Parámetro 'page' no puede ser negativo");
+        }
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("Parámetro 'size' debe estar entre 1 y " + MAX_PAGE_SIZE);
+        }
+        if (sort == null || !SORT_FIELDS.contains(sort)) {
+            throw new IllegalArgumentException("Parámetro 'sort' no válido");
+        }
+        String dir = direction == null ? "desc" : direction.toLowerCase();
+        if (!dir.equals("asc") && !dir.equals("desc")) {
+            throw new IllegalArgumentException("Parámetro 'direction' no válido");
+        }
+        Sort sortConfig = dir.equals("desc") ? Sort.by(sort).descending() : Sort.by(sort).ascending();
+        return PageRequest.of(page, size, sortConfig);
+    }
+
     public PagedResponse<ProductDTO> getAllProducts(int page, int size, String sort, String direction) {
-        Sort sortConfig = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sort).descending()
-                : Sort.by(sort).ascending();
-        Pageable pageable = PageRequest.of(page, size, sortConfig);
-        Page<Product> products = productRepository.findByActiveTrue(pageable);
+        Page<Product> products = productRepository.findByActiveTrue(buildPageable(page, size, sort, direction));
         return mapToPagedResponse(products);
     }
 
     public PagedResponse<ProductDTO> getFiltered(Long categoryId, Long materialId, BigDecimal minPrice, BigDecimal maxPrice,
                                                   String color, boolean inStock, int page, int size, String sort, String direction) {
-        Sort sortConfig = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sort).descending()
-                : Sort.by(sort).ascending();
-        Pageable pageable = PageRequest.of(page, size, sortConfig);
-        Page<Product> products = productRepository.findFiltered(categoryId, materialId, minPrice, maxPrice, colorOrEmpty(color), inStock, pageable);
+        Page<Product> products = productRepository.findFiltered(categoryId, materialId, minPrice, maxPrice,
+                colorOrEmpty(color), inStock, buildPageable(page, size, sort, direction));
         return mapToPagedResponse(products);
     }
 
@@ -78,12 +93,9 @@ public class ProductService {
     public PagedResponse<ProductDTO> search(String query, int page, int size, String sort, String direction,
                                             Long categoryId, Long materialId, BigDecimal minPrice, BigDecimal maxPrice,
                                             String color, boolean inStock) {
-        Sort sortConfig = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sort).descending()
-                : Sort.by(sort).ascending();
-        Pageable pageable = PageRequest.of(page, size, sortConfig);
         Page<Product> products = productRepository.searchFiltered(
-                query, categoryId, materialId, minPrice, maxPrice, colorOrEmpty(color), inStock, pageable);
+                query, categoryId, materialId, minPrice, maxPrice, colorOrEmpty(color), inStock,
+                buildPageable(page, size, sort, direction));
         return mapToPagedResponse(products);
     }
 

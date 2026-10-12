@@ -32,7 +32,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
            "LOWER(p.color) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Product> searchProducts(@Param("query") String query, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.category.id = :categoryId AND " +
+    @Query("SELECT p FROM Product p WHERE p.active = true AND " +
+           "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
            "(:materialId IS NULL OR :materialId MEMBER OF p.materials) AND " +
            "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
            "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
