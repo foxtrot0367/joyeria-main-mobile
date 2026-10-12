@@ -74,10 +74,10 @@ HTTP → RateLimitFilter → JwtAuthenticationFilter → Controller (@Valid DTO)
 
 **Reglas actuales de autorización:**
 - `/api/auth/**` y catálogo/lecturas: `permitAll`.
-- Endpoints de usuario: autenticado (ownership verificado en direcciones, pedidos y pagos; **falta en tickets**).
+- Endpoints de usuario: autenticado (ownership verificado en direcciones, pedidos, pagos y **tickets**).
 - `/api/admin/**`: `hasRole('ADMIN')` + `@PreAuthorize` por controlador (doble barrera).
 
-**Inventario API:** 83 endpoints (28 públicos / 28 autenticados / 27 admin). Una ruta `permitAll` sin implementar: `/api/support/tickets/guest` (`/api/payments/webhook/**` implementado en Fase 5; `POST /api/payments/process` y `GET /api/payments/reference/{ref}` eliminados por IDOR).
+**Inventario API:** 88 endpoints (28 públicos / 28 autenticados / 32 admin). Una ruta `permitAll` sin implementar: `/api/support/tickets/guest` (`/api/payments/webhook/**` implementado en Fase 5; `POST /api/payments/process` y `GET /api/payments/reference/{ref}` eliminados por IDOR). En Fase 6 se añadieron: `POST /api/admin/uploads`, `GET /api/admin/orders/{id}`, `GET /api/admin/support/tickets/{id}`, `POST /api/admin/support/tickets/{id}/responses`, `GET /api/admin/reviews`.
 
 ---
 
@@ -127,12 +127,12 @@ Migraciones: `V1` (19 tablas) + `V2..V7` (alineaciones) + **segundo `V2` a renum
 | Carrito (server-side) | ✅ Funcional (falta validar stock acumulado) |
 | Favoritos | ✅ Funcional |
 | Checkout | ❌ Sin validación en cliente; saltos de paso; envía PAN |
-| Pagos | ❌ Ficticios: marcan pedido como pagado sin pasarela ni ownership |
-| Pedidos + estados | ✅ Máquina de estados con devolución de stock |
+| Pagos | ✅ Mercado Pago (Checkout Pro) + webhook firmado + sandbox en dev; solo la pasarela marca `PAID` |
+| Pedidos + estados | ✅ Máquina de estados con devolución de stock + detalle admin con cliente/items |
 | Cupones | ⚠️ Validación incompleta al crear pedido |
-| Reseñas | ⚠️ Auto-aprobadas, sin verificar compra |
-| Soporte/tickets | ⚠️ Sin ownership (IDOR); admin sin endpoint de respuesta |
-| Panel admin | ⚠️ CRUDs existen; dashboard con métricas incorrectas |
+| Reseñas | ✅ Requieren compra previa; creación `PENDING` y moderación admin (aprobar/rechazar) |
+| Soporte/tickets | ✅ Ownership verificado; hilo de respuestas admin↔cliente en ambos paneles |
+| Panel admin | ✅ Dashboard con métricas reales + CRUDs (imágenes, pedidos, usuarios, soporte, reseñas) |
 | Email transaccional | ❌ `EmailService` no envía nada |
 | Cloudinary/imágenes | ❌ Config sin implementación Java |
 

@@ -164,19 +164,26 @@
 
 ---
 
-## FASE 6 — Admin
+## FASE 6 — Admin ✅ (completada 2026-10-11)
 
 **Objetivo:** dashboard con métricas correctas y CRUDs profesionales.
 
 **Tareas:**
-1. Dashboard: ventas del día/mes (solo pedidos pagados), pedidos, clientes, top productos, stock bajo — corrigiendo B-M11.
-2. CRUD productos con imágenes (subida → Cloudinary si hay credenciales; si no, subida local a `uploads/` con volumen).
-3. Pedidos: cambiar estado con máquina de estados, vista de detalle con cliente y productos.
-4. Usuarios: roles, activar/desactivar, proteger último admin (B-B2).
-5. Soporte admin: responder tickets (hoy no existe endpoint — B-M6) + ver respuestas en cliente.
-6. Reseñas: moderación funcional.
+1. ✅ Dashboard: ventas del día/mes (solo pedidos pagados), pedidos, clientes, top productos, stock bajo — corrigiendo B-M11. `DashboardStatsDTO` amplía `todayRevenue`/`monthRevenue` y `topSellingProducts` (top 5 real por `soldCount`); `ordersByStatus` con todos los estados.
+2. ✅ CRUD productos con imágenes: subida local a `uploads/` (volumen) vía `POST /api/admin/uploads` (`FileStorageService`, validación de tipo, `/uploads/**` servido por `WebConfig`); si hay credenciales Cloudinary la implementación es sustituible.
+3. ✅ Pedidos: máquina de estados (ya existente) + `GET /api/admin/orders/{id}` con cliente/items y vista de detalle con acciones de transición válidas (transiciones inválidas → 400).
+4. ✅ Usuarios: roles y activar/desactivar, **protegiendo el último admin** (B-B2): no se puede degradar ni desactivar al último `ADMIN` activo (→ 400).
+5. ✅ Soporte admin: hilos de conversación con `GET /api/admin/support/tickets/{id}` y `POST /api/admin/support/tickets/{id}/responses` (B-M6); `SupportTicketDTO` incluye `responses`; el cliente ve las respuestas desde `/soporte`.
+6. ✅ Reseñas: moderación funcional con `GET /api/admin/reviews?status=` (filtro pendientes/aprobadas/rechazadas/todas) + aprobar/rechazar; la creación ya exige compra previa y queda `PENDING`.
 
-**Criterio de salida:** el admin puede operar el ciclo completo de negocio sin tocar BD; métricas cuadran con datos reales.
+- ✅ Extras backend: `TopProductDTO`, `TicketResponseDTO`, `UploadResponse`; consultas de repositorio para métricas (`countGroupByStatus`, `sumTotalByPaymentStatusSince`, contadores de stock/usuarios); `findAllByOrderByCreatedAtDesc` de reseñas.
+- ✅ Frontend: `Dashboard` (tarjetas + más vendidos), `AdminProducts` (subida de imágenes con previsualización), `AdminOrders` (detalle), `AdminUsers` (mensaje de error del último admin), `AdminSupport` (conversación + responder), `AdminReviews` (filtros + paginación), `SupportPage` (mis tickets + respuestas), `admin.service`/`order.service`/`user.service`.
+
+**Tests (95 en verde, +14 sobre Fase 5):** `FileStorageServiceTest` (4), `UserServiceTest` (7), `SupportServiceTest` (5) — más `OrderServiceTest` y `ReviewServiceTest` ampliados. Frontend: `npm run lint` (0 errores, 10 warnings preexistentes) y `npm run build` OK.
+
+**Verificación E2E (PostgreSQL local, perfil `dev`, smoke6):** login admin → dashboard con métricas reales (pedidos, ingresos hoy/mes, clientes, stock bajo, top 5, por estado); subida de imagen (`200`, servida en `/uploads/...`) y producto creado con imagen; flujo comprador registro→carrito→pedido→`sandbox/confirm` (`PAID`); detalle admin con cliente/items; transición inválida `PAID→DELIVERED` = `400`, válidas `PREPARING→SHIPPED→DELIVERED` = OK; degradar/desactivar último admin = `400`; ticket creado por cliente y respondido por admin (`responses=1`, `staff=true`) visible en el cliente; reseña creada `PENDING`, visible y aprobada por admin.
+
+**Criterio de salida:** ✅ el admin opera el ciclo completo de negocio (productos con imágenes, pedidos y estados, usuarios, soporte, reseñas) sin tocar BD; métricas cuadran con datos reales.
 
 ---
 
