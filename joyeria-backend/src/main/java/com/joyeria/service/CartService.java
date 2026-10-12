@@ -37,6 +37,10 @@ public class CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
 
+        if (request.getQuantity() == null || request.getQuantity() < 1) {
+            throw new IllegalArgumentException("La cantidad debe ser al menos 1");
+        }
+
         if (!product.getActive() || product.getStock() < request.getQuantity()) {
             throw new IllegalStateException("El producto no está disponible o no tiene suficiente stock");
         }
@@ -57,7 +61,12 @@ public class CartService {
                     return item;
                 });
 
-        cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
+        int newQuantity = cartItem.getQuantity() + request.getQuantity();
+        if (product.getStock() < newQuantity) {
+            throw new IllegalStateException("Solo hay " + product.getStock() + " unidad(es) disponible(s) de " + product.getName());
+        }
+
+        cartItem.setQuantity(newQuantity);
         cartItemRepository.save(cartItem);
 
         return mapToDTO(cart);
@@ -119,6 +128,7 @@ public class CartService {
                         .productName(item.getProduct().getName())
                         .productSlug(item.getProduct().getSlug())
                         .productPrice(item.getProduct().getPrice())
+                        .productStock(item.getProduct().getStock())
                         .productImage(item.getProduct().getImages().isEmpty() ?
                                 null : item.getProduct().getImages().get(0).getUrl())
                         .quantity(item.getQuantity())

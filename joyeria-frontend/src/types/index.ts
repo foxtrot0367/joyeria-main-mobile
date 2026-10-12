@@ -84,6 +84,7 @@ export interface CartItem {
   productSlug: string
   productImage?: string
   productPrice: number
+  productStock: number
   quantity: number
   subtotal: number
 }

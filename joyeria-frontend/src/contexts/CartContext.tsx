@@ -1,12 +1,16 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { Cart } from '../types'
 import { cartService } from '../services/cart.service'
+import { getErrorMessage } from '../utils/errors'
 import { useAuth } from './AuthContext'
 
 interface CartContextType {
   cart: Cart | null
   itemCount: number
   loading: boolean
+  error: string | null
+  pendingItemId: number | null
+  clearError: () => void
   addItem: (productId: number, quantity?: number) => Promise<void>
   updateQuantity: (itemId: number, quantity: number) => Promise<void>
   removeItem: (itemId: number) => Promise<void>
@@ -20,6 +24,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pendingItemId, setPendingItemId] = useState<number | null>(null)
+
+  const clearError = useCallback(() => setError(null), [])
 
   const refreshCart = useCallback(async () => {
     if (!isAuthenticated) { setCart(null); return }
@@ -33,48 +41,49 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refreshCart() }, [refreshCart])
 
-  const addItem = async (productId: number, quantity = 1) => {
+  const runMutation = async (
+    key: number,
+    action: () => Promise<Cart | void>,
+    fallbackMessage: string,
+  ) => {
+    setError(null)
+    setPendingItemId(key)
     try {
-      const data = await cartService.addItem(productId, quantity)
-      setCart(data)
+      const data = await action()
+      if (data) setCart(data)
     } catch (err) {
-      console.error('Error al agregar al carrito:', err)
+      setError(getErrorMessage(err, fallbackMessage))
       throw err
+    } finally {
+      setPendingItemId(null)
     }
   }
 
-  const updateQuantity = async (itemId: number, quantity: number) => {
-    try {
-      const data = await cartService.updateQuantity(itemId, quantity)
-      setCart(data)
-    } catch (err) {
-      console.error('Error al actualizar cantidad:', err)
-      throw err
-    }
-  }
+  const addItem = (productId: number, quantity = 1) =>
+    runMutation(productId, () => cartService.addItem(productId, quantity), 'No se pudo agregar el producto al carrito')
 
-  const removeItem = async (itemId: number) => {
-    try {
-      const data = await cartService.removeItem(itemId)
-      setCart(data)
-    } catch (err) {
-      console.error('Error al eliminar item:', err)
-      throw err
-    }
-  }
+  const updateQuantity = (itemId: number, quantity: number) =>
+    runMutation(itemId, () => cartService.updateQuantity(itemId, quantity), 'No se pudo actualizar la cantidad')
+
+  const removeItem = (itemId: number) =>
+    runMutation(itemId, () => cartService.removeItem(itemId), 'No se pudo eliminar el producto')
 
   const clearCart = async () => {
+    setError(null)
+    setPendingItemId(-1)
     try {
       await cartService.clearCart()
       setCart(null)
     } catch (err) {
-      console.error('Error al vaciar carrito:', err)
+      setError(getErrorMessage(err, 'No se pudo vaciar el carrito'))
       throw err
+    } finally {
+      setPendingItemId(null)
     }
   }
 
   return (
-    <CartContext.Provider value={{ cart, itemCount: cart?.itemCount || 0, loading, addItem, updateQuantity, removeItem, clearCart, refreshCart }}>
+    <CartContext.Provider value={{ cart, itemCount: cart?.itemCount || 0, loading, error, pendingItemId, clearError, addItem, updateQuantity, removeItem, clearCart, refreshCart }}>
       {children}
     </CartContext.Provider>
   )
