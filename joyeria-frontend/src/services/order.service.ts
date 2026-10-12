@@ -39,6 +39,11 @@ export const orderService = {
     return data.data
   },
 
+  async getAdminOrder(id: number): Promise<Order> {
+    const { data } = await api.get<ApiResponse<Order>>(`/admin/orders/${id}`)
+    return data.data
+  },
+
   async updateStatus(id: number, status: string): Promise<Order> {
     const { data } = await api.put<ApiResponse<Order>>(`/admin/orders/${id}/status`, null, { params: { status } })
     return data.data
