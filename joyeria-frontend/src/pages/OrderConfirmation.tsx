@@ -44,7 +44,7 @@ export default function OrderConfirmation() {
         </div>
         <h1 className="font-serif text-3xl font-medium text-foreground mb-2">¡Gracias por tu compra!</h1>
         <p className="text-foreground-faint">Tu pedido <span className="font-medium text-[#C9A227]">#{order.orderNumber}</span> fue confirmado.</p>
-        <p className="text-sm text-foreground-faint mt-2">Te enviamos un correo electrónico con los detalles del pedido.</p>
+        <p className="text-sm text-foreground-faint mt-2">Guarda tu número de pedido para hacer seguimiento.</p>
       </motion.div>
 
       <div className="bg-surface rounded-lg border border-line/70 p-6 mb-6">

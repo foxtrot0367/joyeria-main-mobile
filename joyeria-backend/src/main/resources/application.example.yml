@@ -29,6 +29,18 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 20MB
+  mail:
+    # Configura MAIL_HOST/USERNAME/PASSWORD y pon EMAIL_ENABLED=true para enviar correos reales.
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 jwt:
   secret: ${JWT_SECRET}
@@ -38,6 +50,11 @@ jwt:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   upload-dir: ${UPLOAD_DIR:uploads}
+  email:
+    # EMAIL_ENABLED=true activa el envío por SMTP (requiere MAIL_HOST).
+    # EMAIL_LOG_LINK=true registra los enlaces en logs (solo para desarrollo).
+    enabled: ${EMAIL_ENABLED:false}
+    log-link: ${EMAIL_LOG_LINK:false}
   security:
     trusted-proxies: ${TRUSTED_PROXIES:}
 
@@ -50,7 +67,6 @@ payment:
 
 email:
   from: ${EMAIL_FROM:no-reply@aurajoyeria.com}
-  api-key: ${EMAIL_API_KEY:}
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:}

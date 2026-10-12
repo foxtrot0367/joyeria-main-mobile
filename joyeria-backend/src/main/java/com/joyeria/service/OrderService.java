@@ -1,10 +1,12 @@
 package com.joyeria.service;
 
 import com.joyeria.dto.*;
+import com.joyeria.event.OrderCreatedEvent;
 import com.joyeria.exception.ResourceNotFoundException;
 import com.joyeria.model.*;
 import com.joyeria.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
     private final CouponService couponService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderDTO createOrder(Long userId, OrderCreateRequest request) {
@@ -110,7 +113,10 @@ public class OrderService {
         cart.getItems().clear();
         cartRepository.save(cart);
 
-        return mapToDTO(order);
+        OrderDTO dto = mapToDTO(order);
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                user.getEmail(), user.getFirstName(), dto.getOrderNumber(), dto.getTotal()));
+        return dto;
     }
 
     public CheckoutSummaryDTO summarizeCart(Long userId, String couponCode) {
