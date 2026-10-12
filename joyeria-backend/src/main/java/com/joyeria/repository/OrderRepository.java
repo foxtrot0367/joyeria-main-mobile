@@ -2,6 +2,7 @@ package com.joyeria.repository;
 
 import com.joyeria.model.Order;
 import com.joyeria.model.Order.OrderStatus;
+import com.joyeria.model.Order.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,7 +23,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     
     @Query("SELECT COALESCE(SUM(o.total), 0) FROM Order o WHERE o.status = :status")
     java.math.BigDecimal sumTotalByStatus(@Param("status") OrderStatus status);
-    
-    @Query("SELECT COALESCE(SUM(o.total), 0) FROM Order o")
-    java.math.BigDecimal sumAllTotals();
+
+    @Query("SELECT COALESCE(SUM(o.total), 0) FROM Order o WHERE o.paymentStatus = :status")
+    java.math.BigDecimal sumTotalByPaymentStatus(@Param("status") PaymentStatus status);
 }

@@ -6,6 +6,7 @@ import { orderService } from '../services/order.service'
 import { useCart } from '../contexts/CartContext'
 import type { Order } from '../types'
 import Button from '../components/Button'
+import OrderTimeline from '../components/OrderTimeline'
 import { formatPrice, formatDate, getStatusLabel, getStatusColor } from '../utils/format'
 
 export default function OrderConfirmation() {
@@ -45,6 +46,11 @@ export default function OrderConfirmation() {
         <p className="text-foreground-faint">Tu pedido <span className="font-medium text-[#C9A227]">#{order.orderNumber}</span> fue confirmado.</p>
         <p className="text-sm text-foreground-faint mt-2">Te enviamos un correo electrónico con los detalles del pedido.</p>
       </motion.div>
+
+      <div className="bg-surface rounded-lg border border-line/70 p-6 mb-6">
+        <h2 className="font-medium text-foreground mb-5 text-sm">Estado del pedido</h2>
+        <OrderTimeline status={order.status} />
+      </div>
 
       <div className="bg-surface rounded-lg border border-line/70 p-6 mb-6">
         <div className="flex items-center justify-between mb-5">

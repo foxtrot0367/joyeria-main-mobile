@@ -255,7 +255,7 @@ public class OrderService {
     public DashboardStatsDTO getDashboardStats() {
         return DashboardStatsDTO.builder()
                 .totalOrders(orderRepository.count())
-                .totalRevenue(orderRepository.sumAllTotals())
+                .totalRevenue(orderRepository.sumTotalByPaymentStatus(Order.PaymentStatus.COMPLETED))
                 .totalProducts(productRepository.count())
                 .totalUsers(userRepository.count())
                 .pendingOrders(orderRepository.findByStatus(Order.OrderStatus.PENDING,

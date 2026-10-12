@@ -1,6 +1,7 @@
 package com.joyeria.service;
 
 import com.joyeria.dto.CheckoutSummaryDTO;
+import com.joyeria.dto.DashboardStatsDTO;
 import com.joyeria.dto.OrderCreateRequest;
 import com.joyeria.dto.OrderDTO;
 import com.joyeria.exception.ResourceNotFoundException;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,6 +24,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -239,5 +244,22 @@ class OrderServiceTest {
 
         assertEquals(0, BigDecimal.ZERO.compareTo(summary.getShippingCost()));
         assertEquals(0, new BigDecimal("600000").compareTo(summary.getTotal()));
+    }
+
+    @Test
+    void getDashboardStats_RevenueCountsOnlyCompletedPayments() {
+        when(orderRepository.count()).thenReturn(10L);
+        when(orderRepository.sumTotalByPaymentStatus(Order.PaymentStatus.COMPLETED))
+                .thenReturn(new BigDecimal("750000"));
+        when(productRepository.count()).thenReturn(5L);
+        when(userRepository.count()).thenReturn(3L);
+        when(orderRepository.findByStatus(eq(Order.OrderStatus.PENDING), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        DashboardStatsDTO stats = orderService.getDashboardStats();
+
+        assertEquals(0, new BigDecimal("750000").compareTo(stats.getTotalRevenue()));
+        assertEquals(10L, stats.getTotalOrders());
+        verify(orderRepository).sumTotalByPaymentStatus(Order.PaymentStatus.COMPLETED);
     }
 }
