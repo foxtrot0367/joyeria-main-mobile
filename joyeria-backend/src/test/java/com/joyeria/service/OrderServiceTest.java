@@ -1,6 +1,7 @@
 package com.joyeria.service;
 
 import com.joyeria.dto.OrderCreateRequest;
+import com.joyeria.dto.OrderDTO;
 import com.joyeria.exception.ResourceNotFoundException;
 import com.joyeria.model.*;
 import com.joyeria.repository.*;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +39,8 @@ class OrderServiceTest {
     private UserRepository userRepository;
     @Mock
     private CouponRepository couponRepository;
+    @Mock
+    private CouponService couponService;
 
     @InjectMocks
     private OrderService orderService;
@@ -122,5 +126,73 @@ class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
 
         assertThrows(IllegalStateException.class, () -> orderService.updateOrderStatus(1L, "PENDING"));
+    }
+
+    private OrderCreateRequest baseRequest() {
+        OrderCreateRequest request = new OrderCreateRequest();
+        request.setShippingAddress("Test Address");
+        request.setShippingCity("Bogota");
+        request.setPaymentMethod("card");
+        return request;
+    }
+
+    @Test
+    void createOrder_WithValidCoupon_AppliesDiscount() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Coupon coupon = new Coupon();
+        coupon.setCode("SAVE10");
+        coupon.setDiscountType(Coupon.DiscountType.PERCENTAGE);
+        coupon.setDiscountValue(new BigDecimal("10"));
+        coupon.setUsesCount(0);
+        when(couponService.getValidCoupon("SAVE10")).thenReturn(coupon);
+
+        OrderCreateRequest request = baseRequest();
+        request.setCouponCode("save10");
+
+        OrderDTO order = orderService.createOrder(1L, request);
+
+        assertEquals(0, new BigDecimal("200000").compareTo(order.getSubtotal()));
+        assertEquals(0, new BigDecimal("20000").compareTo(order.getDiscount()));
+        assertEquals(0, new BigDecimal("195000").compareTo(order.getTotal()));
+        assertEquals("SAVE10", order.getCouponCode());
+        assertEquals(1, coupon.getUsesCount());
+    }
+
+    @Test
+    void createOrder_WithInvalidCoupon_ThrowsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+        when(couponService.getValidCoupon("NOPE"))
+                .thenThrow(new IllegalStateException("El cupón ha expirado"));
+
+        OrderCreateRequest request = baseRequest();
+        request.setCouponCode("NOPE");
+
+        assertThrows(IllegalStateException.class, () -> orderService.createOrder(1L, request));
+    }
+
+    @Test
+    void createOrder_WithMinAmountNotReached_ThrowsException() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(testProduct));
+
+        Coupon coupon = new Coupon();
+        coupon.setCode("BIG");
+        coupon.setDiscountType(Coupon.DiscountType.FIXED);
+        coupon.setDiscountValue(new BigDecimal("50000"));
+        coupon.setMinAmount(new BigDecimal("500000"));
+        coupon.setUsesCount(0);
+        when(couponService.getValidCoupon("BIG")).thenReturn(coupon);
+
+        OrderCreateRequest request = baseRequest();
+        request.setCouponCode("BIG");
+
+        assertThrows(IllegalStateException.class, () -> orderService.createOrder(1L, request));
     }
 }

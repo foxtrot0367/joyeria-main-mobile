@@ -7,6 +7,7 @@ import com.joyeria.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,20 +26,25 @@ public class CouponService {
     }
 
     public CouponDTO validateCoupon(String code) {
-        Coupon coupon = couponRepository.findByCodeAndActiveTrue(code)
+        return mapToDTO(getValidCoupon(code));
+    }
+
+    public Coupon getValidCoupon(String code) {
+        Coupon coupon = couponRepository.findByCodeAndActiveTrue(code.trim().toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Cupón no válido o inactivo"));
 
-        if (coupon.getValidFrom() != null && java.time.LocalDateTime.now().isBefore(coupon.getValidFrom())) {
+        LocalDateTime now = LocalDateTime.now();
+        if (coupon.getValidFrom() != null && now.isBefore(coupon.getValidFrom())) {
             throw new IllegalStateException("El cupón aún no está activo");
         }
-        if (coupon.getValidUntil() != null && java.time.LocalDateTime.now().isAfter(coupon.getValidUntil())) {
+        if (coupon.getValidUntil() != null && now.isAfter(coupon.getValidUntil())) {
             throw new IllegalStateException("El cupón ha expirado");
         }
         if (coupon.getMaxUses() != null && coupon.getUsesCount() >= coupon.getMaxUses()) {
             throw new IllegalStateException("El cupón ha alcanzado su límite de uso");
         }
 
-        return mapToDTO(coupon);
+        return coupon;
     }
 
     public CouponDTO createCoupon(CouponCreateRequest request) {

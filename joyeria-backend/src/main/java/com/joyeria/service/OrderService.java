@@ -29,6 +29,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
+    private final CouponService couponService;
 
     @Transactional
     public OrderDTO createOrder(Long userId, OrderCreateRequest request) {
@@ -83,18 +84,19 @@ public class OrderService {
         }
 
         BigDecimal discount = BigDecimal.ZERO;
-        if (request.getCouponCode() != null && !request.getCouponCode().isEmpty()) {
-            Coupon coupon = couponRepository.findByCodeAndActiveTrue(request.getCouponCode()).orElse(null);
-            if (coupon != null) {
-                if (coupon.getDiscountType() == Coupon.DiscountType.PERCENTAGE) {
-                    discount = subtotal.multiply(coupon.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
-                } else {
-                    discount = coupon.getDiscountValue().min(subtotal);
-                }
-                coupon.setUsesCount(coupon.getUsesCount() + 1);
-                couponRepository.save(coupon);
-                order.setCouponCode(request.getCouponCode());
+        if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
+            Coupon coupon = couponService.getValidCoupon(request.getCouponCode().trim().toUpperCase());
+            if (coupon.getMinAmount() != null && subtotal.compareTo(coupon.getMinAmount()) < 0) {
+                throw new IllegalStateException("El cupón requiere una compra mínima de " + coupon.getMinAmount());
             }
+            if (coupon.getDiscountType() == Coupon.DiscountType.PERCENTAGE) {
+                discount = subtotal.multiply(coupon.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            } else {
+                discount = coupon.getDiscountValue().min(subtotal);
+            }
+            coupon.setUsesCount(coupon.getUsesCount() + 1);
+            couponRepository.save(coupon);
+            order.setCouponCode(coupon.getCode());
         }
 
         BigDecimal shippingCost = subtotal.compareTo(BigDecimal.valueOf(500000)) >= 0 ? BigDecimal.ZERO : BigDecimal.valueOf(15000);
