@@ -23,6 +23,26 @@ export default function Checkout() {
   const [couponApplied, setCouponApplied] = useState<Coupon | null>(null)
   const [shipping, setShipping] = useState<{ address: string; city: string; department: string; recipient: string; phone: string }>({ address: '', city: '', department: '', recipient: '', phone: '' })
   const [payment, setPayment] = useState<{ method: string }>({ method: 'card' })
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const validateShipping = (): boolean => {
+    const errors: Record<string, string> = {}
+    if (!shipping.address.trim()) errors.address = 'Ingresa la dirección de envío'
+    if (!shipping.city.trim()) errors.city = 'Ingresa la ciudad'
+    if (!shipping.recipient.trim()) errors.recipient = 'Ingresa el nombre del destinatario'
+    if (!shipping.phone.trim()) {
+      errors.phone = 'Ingresa un teléfono de contacto'
+    } else if (!/^[+]?[\d\s().-]{7,20}$/.test(shipping.phone.trim())) {
+      errors.phone = 'Ingresa un teléfono válido'
+    }
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const updateShipping = (field: 'address' | 'city' | 'department' | 'recipient' | 'phone', value: string) => {
+    setShipping(prev => ({ ...prev, [field]: value }))
+    if (fieldErrors[field]) setFieldErrors(prev => { const next = { ...prev }; delete next[field]; return next })
+  }
 
   const applyCoupon = async () => {
     try {
@@ -33,6 +53,11 @@ export default function Checkout() {
   }
 
   const handlePay = async () => {
+    if (!validateShipping()) {
+      setStep(1)
+      toast('Completa los datos de envío antes de pagar', 'error')
+      return
+    }
     setLoading(true)
     try {
       const order = await orderService.createOrder({
@@ -93,17 +118,21 @@ export default function Checkout() {
               <div className="flex items-center gap-2 mb-4"><MapPin size={18} className="text-[#C9A227]" /><h2 className="font-medium text-foreground">Datos de envío</h2></div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2"><label className="block text-xs font-medium text-foreground-faint mb-1">Dirección *</label>
-                  <input value={shipping.address} onChange={e => setShipping({ ...shipping, address: e.target.value })} required className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" placeholder="Calle 123 # 45-67, Apto 301" /></div>
+                  <input value={shipping.address} onChange={e => updateShipping('address', e.target.value)} required aria-invalid={!!fieldErrors.address} className={`w-full px-3 py-2.5 border rounded-lg text-sm outline-none focus:border-[#C9A227] ${fieldErrors.address ? 'border-red-400' : 'border-line'}`} placeholder="Calle 123 # 45-67, Apto 301" />
+                  {fieldErrors.address && <p className="text-xs text-red-500 mt-1">{fieldErrors.address}</p>}</div>
                 <div><label className="block text-xs font-medium text-foreground-faint mb-1">Ciudad *</label>
-                  <input value={shipping.city} onChange={e => setShipping({ ...shipping, city: e.target.value })} required className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" placeholder="Bogotá" /></div>
+                  <input value={shipping.city} onChange={e => updateShipping('city', e.target.value)} required aria-invalid={!!fieldErrors.city} className={`w-full px-3 py-2.5 border rounded-lg text-sm outline-none focus:border-[#C9A227] ${fieldErrors.city ? 'border-red-400' : 'border-line'}`} placeholder="Bogotá" />
+                  {fieldErrors.city && <p className="text-xs text-red-500 mt-1">{fieldErrors.city}</p>}</div>
                 <div><label className="block text-xs font-medium text-foreground-faint mb-1">Departamento</label>
-                  <input value={shipping.department} onChange={e => setShipping({ ...shipping, department: e.target.value })} className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" placeholder="Cundinamarca" /></div>
+                  <input value={shipping.department} onChange={e => updateShipping('department', e.target.value)} className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" placeholder="Cundinamarca" /></div>
                 <div><label className="block text-xs font-medium text-foreground-faint mb-1">Destinatario *</label>
-                  <input value={shipping.recipient} onChange={e => setShipping({ ...shipping, recipient: e.target.value })} required className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" placeholder="María García" /></div>
+                  <input value={shipping.recipient} onChange={e => updateShipping('recipient', e.target.value)} required aria-invalid={!!fieldErrors.recipient} className={`w-full px-3 py-2.5 border rounded-lg text-sm outline-none focus:border-[#C9A227] ${fieldErrors.recipient ? 'border-red-400' : 'border-line'}`} placeholder="María García" />
+                  {fieldErrors.recipient && <p className="text-xs text-red-500 mt-1">{fieldErrors.recipient}</p>}</div>
                 <div><label className="block text-xs font-medium text-foreground-faint mb-1">Teléfono *</label>
-                  <input value={shipping.phone} onChange={e => setShipping({ ...shipping, phone: e.target.value })} required className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227]" placeholder="+57 300 000 0000" /></div>
+                  <input value={shipping.phone} onChange={e => updateShipping('phone', e.target.value)} required aria-invalid={!!fieldErrors.phone} className={`w-full px-3 py-2.5 border rounded-lg text-sm outline-none focus:border-[#C9A227] ${fieldErrors.phone ? 'border-red-400' : 'border-line'}`} placeholder="+57 300 000 0000" />
+                  {fieldErrors.phone && <p className="text-xs text-red-500 mt-1">{fieldErrors.phone}</p>}</div>
               </div>
-              <Button className="mt-6 w-full" size="lg" onClick={() => setStep(2)}>Continuar al pago</Button>
+              <Button className="mt-6 w-full" size="lg" onClick={() => { if (validateShipping()) setStep(2) }}>Continuar al pago</Button>
             </motion.div>
           )}
 
