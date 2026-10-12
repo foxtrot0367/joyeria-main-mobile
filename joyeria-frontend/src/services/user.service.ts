@@ -107,4 +107,19 @@ export const userService = {
     const { data } = await api.post<ApiResponse<SupportTicket>>('/support/tickets', ticket)
     return data.data
   },
+
+  async getSupportTickets(page = 0, size = 10): Promise<PagedResponse<SupportTicket>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<SupportTicket>>>('/support/tickets', { params: { page, size } })
+    return data.data
+  },
+
+  async getSupportTicket(ticketNumber: string): Promise<SupportTicket> {
+    const { data } = await api.get<ApiResponse<SupportTicket>>(`/support/tickets/${ticketNumber}`)
+    return data.data
+  },
+
+  async replyToSupportTicket(ticketNumber: string, message: string): Promise<SupportTicket> {
+    const { data } = await api.post<ApiResponse<SupportTicket>>(`/support/tickets/${ticketNumber}/responses`, { message })
+    return data.data
+  },
 }

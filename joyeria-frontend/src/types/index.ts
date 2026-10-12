@@ -192,8 +192,18 @@ export interface SupportTicket {
   status: string
   customerName?: string
   customerEmail?: string
+  responses?: TicketResponse[]
   createdAt: string
   updatedAt?: string
+}
+
+export interface TicketResponse {
+  id: number
+  message: string
+  authorName: string
+  authorRole: string
+  staff: boolean
+  createdAt: string
 }
 
 export interface SocialLink {

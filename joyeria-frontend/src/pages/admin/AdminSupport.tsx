@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { LifeBuoy } from 'lucide-react'
+import { LifeBuoy, Eye, Send } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
 import { useToast } from '../../contexts/ToastContext'
 import type { SupportTicket } from '../../types'
 import Skeleton from '../../components/Skeleton'
+import Modal from '../../components/Modal'
+import Button from '../../components/Button'
 import Pagination from '../../components/Pagination'
 import { formatDate, getStatusLabel, getStatusColor } from '../../utils/format'
 import { getErrorMessage } from '../../utils/errors'
@@ -15,6 +17,11 @@ export default function AdminSupport() {
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<SupportTicket | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [reply, setReply] = useState('')
+  const [sending, setSending] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => { load() }, [page])
@@ -28,12 +35,43 @@ export default function AdminSupport() {
     finally { setLoading(false) }
   }
 
+  const openDetail = async (id: number) => {
+    setDetailLoading(true)
+    setSelected(null)
+    setReply('')
+    try {
+      setSelected(await adminService.getTicket(id))
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, 'No se pudo cargar el ticket'), 'error')
+    } finally { setDetailLoading(false) }
+  }
+
   const changeStatus = async (id: number, status: string) => {
-    try { await adminService.updateTicketStatus(id, status); toast('Estado actualizado'); load() }
-    catch (err: unknown) {
+    setUpdating(true)
+    try {
+      const updated = await adminService.updateTicketStatus(id, status)
+      toast('Estado actualizado')
+      setSelected(updated)
+      load()
+    } catch (err: unknown) {
       const message = getErrorMessage(err, 'Error al actualizar')
       toast(message || 'Error al actualizar', 'error')
-    }
+    } finally { setUpdating(false) }
+  }
+
+  const sendReply = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selected || !reply.trim()) return
+    setSending(true)
+    try {
+      const updated = await adminService.replyToTicket(selected.id, reply.trim())
+      setSelected(updated)
+      setReply('')
+      toast('Respuesta enviada')
+      load()
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, 'No se pudo enviar la respuesta'), 'error')
+    } finally { setSending(false) }
   }
 
   return (
@@ -59,6 +97,7 @@ export default function AdminSupport() {
                   <th className="p-4">Asunto</th>
                   <th className="p-4">Fecha</th>
                   <th className="p-4">Estado</th>
+                  <th className="p-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -76,10 +115,16 @@ export default function AdminSupport() {
                     </td>
                     <td className="p-4 text-foreground-faint whitespace-nowrap text-xs">{formatDate(t.createdAt)}</td>
                     <td className="p-4">
-                      <select value={t.status} onChange={e => changeStatus(t.id, e.target.value)}
-                        className={`px-2 py-1 rounded-lg border border-line text-xs outline-none bg-surface ${getStatusColor(t.status)}`}>
-                        {statuses.map(s => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
-                      </select>
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(t.status)}`}>
+                        {getStatusLabel(t.status)}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-end">
+                        <button onClick={() => openDetail(t.id)} className="p-2 text-foreground-faint hover:text-[#C9A227]" title="Ver conversación">
+                          <Eye size={15} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -89,6 +134,52 @@ export default function AdminSupport() {
           {totalPages > 1 && <div className="p-4 border-t border-line/70"><Pagination page={page} totalPages={totalPages} onPageChange={setPage} /></div>}
         </div>
       )}
+
+      <Modal isOpen={!!selected || detailLoading} onClose={() => { setSelected(null); setDetailLoading(false) }} title="Conversación" maxWidth="max-w-2xl">
+        {detailLoading || !selected ? (
+          <Skeleton className="h-64" />
+        ) : (
+          <div className="space-y-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-serif text-lg text-foreground">{selected.subject}</p>
+                <p className="text-xs text-foreground-faint">#{selected.ticketNumber} · {formatDate(selected.createdAt)}</p>
+                <p className="text-xs text-foreground-faint mt-1">{selected.customerName} {selected.customerEmail ? `· ${selected.customerEmail}` : ''}</p>
+              </div>
+              <select value={selected.status} disabled={updating} onChange={e => changeStatus(selected.id, e.target.value)}
+                className={`px-2 py-1 rounded-lg border border-line text-xs outline-none bg-surface ${getStatusColor(selected.status)}`}>
+                {statuses.map(s => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              <div className="bg-background-warm rounded-lg p-4">
+                <p className="text-xs font-medium text-foreground-faint mb-1">{selected.customerName || 'Cliente'}</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{selected.message}</p>
+              </div>
+              {(selected.responses || []).map(r => (
+                <div key={r.id} className={`rounded-lg p-4 ${r.staff ? 'bg-[#C9A227]/10 ml-6' : 'bg-background-warm mr-6'}`}>
+                  <p className="text-xs font-medium text-foreground-faint mb-1">
+                    {r.staff ? `Soporte · ${r.authorName}` : r.authorName} · {formatDate(r.createdAt)}
+                  </p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{r.message}</p>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={sendReply} className="border-t border-line/70 pt-4 space-y-3">
+              <textarea value={reply} onChange={e => setReply(e.target.value)} rows={3} required
+                placeholder="Escribe una respuesta al cliente..."
+                className="w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition resize-none" />
+              <div className="flex justify-end">
+                <Button type="submit" loading={sending} disabled={!reply.trim()}>
+                  Enviar respuesta <Send size={16} />
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

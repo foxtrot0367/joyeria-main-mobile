@@ -128,6 +128,14 @@ export const adminService = {
     const { data } = await api.get<ApiResponse<PagedResponse<SupportTicket>>>('/admin/support/tickets', { params: { page, size } })
     return data.data
   },
+  async getTicket(id: number): Promise<SupportTicket> {
+    const { data } = await api.get<ApiResponse<SupportTicket>>(`/admin/support/tickets/${id}`)
+    return data.data
+  },
+  async replyToTicket(id: number, message: string): Promise<SupportTicket> {
+    const { data } = await api.post<ApiResponse<SupportTicket>>(`/admin/support/tickets/${id}/responses`, { message })
+    return data.data
+  },
   async updateTicketStatus(id: number, status: string): Promise<SupportTicket> {
     const { data } = await api.put<ApiResponse<SupportTicket>>(`/admin/support/tickets/${id}/status`, null, { params: { status } })
     return data.data

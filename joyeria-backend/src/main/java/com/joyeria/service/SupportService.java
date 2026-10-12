@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -84,6 +85,32 @@ public class SupportService {
         return mapToDTO(ticketRepository.save(ticket));
     }
 
+    public SupportTicketDTO getTicketById(Long id) {
+        SupportTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket no encontrado"));
+        return mapToDTO(ticket);
+    }
+
+    @Transactional
+    public SupportTicketDTO addResponseAsAdmin(Long id, String adminEmail, TicketResponseRequest request) {
+        SupportTicket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket no encontrado"));
+        User admin = userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        TicketResponse response = new TicketResponse();
+        response.setTicket(ticket);
+        response.setUser(admin);
+        response.setMessage(request.getMessage());
+
+        ticket.getResponses().add(response);
+        if (ticket.getStatus() == SupportTicket.TicketStatus.OPEN) {
+            ticket.setStatus(SupportTicket.TicketStatus.IN_PROGRESS);
+        }
+
+        return mapToDTO(ticketRepository.save(ticket));
+    }
+
     private void assertOwnership(SupportTicket ticket, String email) {
         if (ticket.getUser() == null || !ticket.getUser().getEmail().equals(email)) {
             // Mismo mensaje que "no existe" para no revelar la existencia de tickets ajenos
@@ -92,6 +119,17 @@ public class SupportService {
     }
 
     private SupportTicketDTO mapToDTO(SupportTicket ticket) {
+        List<TicketResponseDTO> responses = ticket.getResponses().stream()
+                .map(r -> TicketResponseDTO.builder()
+                        .id(r.getId())
+                        .message(r.getMessage())
+                        .authorName(r.getUser() != null ? r.getUser().getFullName() : "Invitado")
+                        .authorRole(r.getUser() != null ? r.getUser().getRole().name() : "GUEST")
+                        .staff(r.getUser() != null && r.getUser().getRole() == UserRole.ADMIN)
+                        .createdAt(r.getCreatedAt())
+                        .build())
+                .toList();
+
         return SupportTicketDTO.builder()
                 .id(ticket.getId())
                 .ticketNumber(ticket.getTicketNumber())
@@ -101,6 +139,7 @@ public class SupportService {
                 .status(ticket.getStatus())
                 .customerName(ticket.getUser() != null ? ticket.getUser().getFullName() : "Invitado")
                 .customerEmail(ticket.getUser() != null ? ticket.getUser().getEmail() : null)
+                .responses(responses)
                 .createdAt(ticket.getCreatedAt())
                 .updatedAt(ticket.getUpdatedAt())
                 .build();
