@@ -106,4 +106,32 @@ class ReviewServiceTest {
         assertThrows(ResourceNotFoundException.class,
                 () -> reviewService.createReview("buyer@example.com", request));
     }
+
+    @Test
+    void getReviewsForAdmin_WithStatus_FiltersByStatus() {
+        Review review = new Review();
+        review.setId(1L);
+        review.setUser(user);
+        review.setProduct(product);
+        review.setRating(5);
+        review.setStatus(Review.ReviewStatus.PENDING);
+
+        when(reviewRepository.findByStatus(eq(Review.ReviewStatus.PENDING), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(review)));
+
+        var response = reviewService.getReviewsForAdmin("PENDING", 0, 20);
+
+        assertEquals(1, response.getContent().size());
+        assertEquals(Review.ReviewStatus.PENDING, response.getContent().get(0).getStatus());
+    }
+
+    @Test
+    void getReviewsForAdmin_WithoutStatus_ReturnsAll() {
+        when(reviewRepository.findAllByOrderByCreatedAtDesc(any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+        var response = reviewService.getReviewsForAdmin(null, 0, 20);
+
+        assertTrue(response.getContent().isEmpty());
+    }
 }

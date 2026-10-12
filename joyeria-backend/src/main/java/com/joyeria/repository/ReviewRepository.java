@@ -19,6 +19,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Optional<Review> findByUserIdAndProductId(Long userId, Long productId);
     boolean existsByUserIdAndProductId(Long userId, Long productId);
     Page<Review> findByStatus(ReviewStatus status, Pageable pageable);
+    Page<Review> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     @Query("SELECT r.product.id, COALESCE(AVG(r.rating), 0.0), COUNT(r) " +
            "FROM Review r WHERE r.product.id IN :productIds AND r.status = :status GROUP BY r.product.id")

@@ -118,6 +118,10 @@ export const adminService = {
   },
 
   // Reviews
+  async getReviews(page = 0, size = 20, status?: string): Promise<PagedResponse<Review>> {
+    const { data } = await api.get<ApiResponse<PagedResponse<Review>>>('/admin/reviews', { params: { page, size, status } })
+    return data.data
+  },
   async moderateReview(id: number, status: string): Promise<Review> {
     const { data } = await api.put<ApiResponse<Review>>(`/admin/reviews/${id}/status`, null, { params: { status } })
     return data.data

@@ -33,6 +33,14 @@ public class ReviewService {
                 .getContent().stream().map(this::mapToDTO).toList();
     }
 
+    public PagedResponse<ReviewDTO> getReviewsForAdmin(String status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Review> reviews = (status == null || status.isBlank())
+                ? reviewRepository.findAllByOrderByCreatedAtDesc(pageable)
+                : reviewRepository.findByStatus(Review.ReviewStatus.valueOf(status), pageable);
+        return mapToPagedResponse(reviews);
+    }
+
     @org.springframework.transaction.annotation.Transactional
     public ReviewDTO createReview(String email, ReviewCreateRequest request) {
         User user = userRepository.findByEmail(email)

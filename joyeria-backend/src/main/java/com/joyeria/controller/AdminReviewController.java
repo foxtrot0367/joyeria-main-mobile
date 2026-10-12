@@ -15,6 +15,14 @@ public class AdminReviewController {
 
     private final ReviewService reviewService;
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<PagedResponse<ReviewDTO>>> getAllReviews(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getReviewsForAdmin(status, page, size)));
+    }
+
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<ReviewDTO>> moderate(
             @PathVariable Long id, @RequestParam String status) {
