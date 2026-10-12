@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Star, BadgePercent, Sparkles } from 'lucide-react'
+import { Plus, Pencil, Trash2, Star, BadgePercent, Sparkles, Upload, X } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
 import { productService } from '../../services/product.service'
 import { categoryService } from '../../services/category.service'
@@ -31,6 +31,7 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -101,6 +102,27 @@ export default function AdminProducts() {
       ...f,
       materialIds: f.materialIds.includes(id) ? f.materialIds.filter((m) => m !== id) : [...f.materialIds, id],
     }))
+  }
+
+  const imageList = form.imageUrls.split('\n').map((s) => s.trim()).filter(Boolean)
+
+  const setImages = (list: string[]) => setForm((f) => ({ ...f, imageUrls: list.join('\n') }))
+
+  const uploadImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    try {
+      const urls: string[] = []
+      for (const file of Array.from(files)) {
+        urls.push(await adminService.uploadImage(file))
+      }
+      setForm((f) => ({ ...f, imageUrls: [...imageList, ...urls].join('\n') }))
+      toast('Imagen(es) subida(s)')
+    } catch (err: unknown) {
+      toast(getErrorMessage(err, 'No se pudo subir la imagen'), 'error')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const input = 'w-full px-3 py-2.5 border border-line rounded-lg text-sm outline-none focus:border-[#C9A227] transition'
@@ -239,8 +261,28 @@ export default function AdminProducts() {
               <input value={form.careInstructions} onChange={e => setForm({ ...form, careInstructions: e.target.value })} className={input} />
             </div>
             <div className="col-span-2">
-              <label className={label}>URLs de imágenes (una por línea)</label>
-              <textarea value={form.imageUrls} onChange={e => setForm({ ...form, imageUrls: e.target.value })} rows={3} className={`${input} resize-none font-mono text-xs`} placeholder="https://..." />
+              <label className={label}>Imágenes</label>
+              <div className="flex items-center gap-3 mb-2">
+                <label className={`cursor-pointer inline-flex items-center gap-2 text-xs px-3 py-2 rounded-lg border border-line hover:border-[#C9A227] text-foreground-muted ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                  <Upload size={14} /> {uploading ? 'Subiendo…' : 'Subir imágenes'}
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={e => uploadImages(e.target.files)} />
+                </label>
+                <span className="text-xs text-foreground-faint">o pega URLs abajo</span>
+              </div>
+              {imageList.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {imageList.map((url, i) => (
+                    <div key={`${url}-${i}`} className="relative w-16 h-16 rounded overflow-hidden border border-line/70 group">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setImages(imageList.filter((_, idx) => idx !== i))}
+                        className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition" title="Quitar">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <textarea value={form.imageUrls} onChange={e => setForm({ ...form, imageUrls: e.target.value })} rows={2} className={`${input} resize-none font-mono text-xs`} placeholder="https://..." />
             </div>
             <div className="col-span-2">
               <label className={label}>Materiales</label>
@@ -269,7 +311,7 @@ export default function AdminProducts() {
           </div>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="ghost" onClick={() => setModal(false)}>Cancelar</Button>
-            <Button type="submit" loading={saving} className="flex-1">{editing ? 'Guardar cambios' : 'Crear producto'}</Button>
+            <Button type="submit" loading={saving} disabled={uploading} className="flex-1">{editing ? 'Guardar cambios' : 'Crear producto'}</Button>
           </div>
         </form>
       </Modal>

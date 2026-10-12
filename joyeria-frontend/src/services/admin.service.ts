@@ -12,9 +12,20 @@ export interface ProductCreateRequest {
   comparePrice?: number | null
   sku: string
   stock: number
+  weight?: string
+  dimensions?: string
+  size?: string
+  color?: string
+  careInstructions?: string
+  features?: string
+  deliveryTime?: string
+  featured?: boolean
+  isNew?: boolean
+  bestSeller?: boolean
+  active?: boolean
   categoryId?: number | null
   materialIds?: number[]
-  images?: Array<{ url: string; alt?: string; isPrimary: boolean; sortOrder: number }>
+  imageUrls?: string[]
 }
 
 export interface CategoryCreateRequest {
@@ -56,6 +67,14 @@ export const adminService = {
   },
   async deleteProduct(id: number): Promise<void> {
     await api.delete(`/admin/products/${id}`)
+  },
+  async uploadImage(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('file', file)
+    const { data } = await api.post<ApiResponse<{ url: string }>>('/admin/uploads', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data.data.url
   },
 
   // Categories

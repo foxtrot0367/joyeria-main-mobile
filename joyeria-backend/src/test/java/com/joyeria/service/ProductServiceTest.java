@@ -34,8 +34,6 @@ class ProductServiceTest {
     @Mock
     private MaterialRepository materialRepository;
     @Mock
-    private ProductImageRepository productImageRepository;
-    @Mock
     private ReviewRepository reviewRepository;
 
     @InjectMocks

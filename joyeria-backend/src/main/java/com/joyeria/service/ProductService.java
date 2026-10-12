@@ -28,7 +28,6 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final MaterialRepository materialRepository;
-    private final ProductImageRepository productImageRepository;
     private final ReviewRepository reviewRepository;
 
     private Pageable buildPageable(int page, int size, String sort, String direction) {
@@ -143,19 +142,9 @@ public class ProductService {
 
         product = productRepository.save(product);
 
-        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-            for (int i = 0; i < request.getImageUrls().size(); i++) {
-                ProductImage image = new ProductImage();
-                image.setProduct(product);
-                image.setUrl(request.getImageUrls().get(i));
-                image.setAlt(product.getName() + " - Imagen " + (i + 1));
-                image.setIsPrimary(i == 0);
-                image.setSortOrder(i);
-                productImageRepository.save(image);
-            }
-        }
+        applyImages(product, request.getImageUrls());
 
-        return mapToDTO(product);
+        return mapToDTO(productRepository.save(product));
     }
 
     @Transactional
@@ -188,8 +177,32 @@ public class ProductService {
             Set<Material> materials = new HashSet<>(materialRepository.findAllById(request.getMaterialIds()));
             product.setMaterials(materials);
         }
+        if (request.getImageUrls() != null) {
+            applyImages(product, request.getImageUrls());
+        }
 
         return mapToDTO(productRepository.save(product));
+    }
+
+    private void applyImages(Product product, List<String> urls) {
+        product.getImages().clear();
+        if (urls == null) {
+            return;
+        }
+        int order = 0;
+        for (String url : urls) {
+            if (url == null || url.isBlank()) {
+                continue;
+            }
+            ProductImage image = new ProductImage();
+            image.setProduct(product);
+            image.setUrl(url.trim());
+            image.setAlt(product.getName() + " - Imagen " + (order + 1));
+            image.setIsPrimary(order == 0);
+            image.setSortOrder(order);
+            product.getImages().add(image);
+            order++;
+        }
     }
 
     public void deleteProduct(Long id) {
