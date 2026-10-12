@@ -97,6 +97,28 @@ export interface CheckoutSummary {
   couponCode: string | null
 }
 
+export interface CheckoutResponse {
+  orderId: number
+  orderNumber: string
+  provider: string
+  preferenceId: string | null
+  checkoutUrl: string | null
+  amount: number
+  currency: string
+  paymentStatus: string
+}
+
+export interface PaymentStatus {
+  orderId: number
+  orderNumber: string
+  orderStatus: string
+  paymentStatus: string
+  provider: string | null
+  paymentMethod: string | null
+  amount: number | null
+  currency: string | null
+}
+
 export interface Order {
   id: number
   orderNumber: string

@@ -33,6 +33,9 @@ public class Payment {
     @Column(name = "provider_reference", length = 120)
     private String providerReference;
 
+    @Column(name = "preference_id", length = 120)
+    private String preferenceId;
+
     @Column(name = "payment_method", length = 40)
     private String paymentMethod;
 

@@ -141,18 +141,26 @@
 
 ---
 
-## FASE 5 — Pagos
+## FASE 5 — Pagos ✅ (completada 2026-10-11)
 
 **Objetivo:** integración Mercado Pago real (checkout pro + webhook).
 
 **Tareas:**
-1. Backend: crear preferencia de pago en MP; estados de pago con idempotencia; webhook con verificación de firma; reconciliación de montos (C4 completo).
-2. Eliminar `PaymentRequest` con datos de tarjeta; usar tokenización MP en frontend (Elements/Checkout Pro) (C7 PCI).
-3. Endpoint `/api/payments/webhook/**` implementado (hoy es 404 huérfano).
-4. Estados: `PENDING→PAID→...` sincronizados con MP; manejo de rechazos/chargebacks.
-5. Sandbox: **requiere credenciales `MERCADOPAGO_*`** — si no las hay, implementar contra sandbox con las keys que aportes; sin ellas, dejar integración preparada y documentada (no inventar credenciales).
+1. ✅ Backend: preferencia de Checkout Pro (`POST /api/payments/checkout`); estados de pago con idempotencia (reutiliza pago `PENDING` por pedido; webhook y confirmación idempotentes por `preference_id`); webhook con verificación de firma HMAC-SHA256; reconciliación de monto + moneda contra el pago registrado (C4 completo).
+2. ✅ Eliminado `PaymentRequest` con datos de tarjeta: el checkout es tokenizado por la pasarela, cero PAN en nuestros servidores; frontend solo envía `{orderId, paymentMethod}` (C7 PCI).
+3. ✅ `POST /api/payments/webhook` implementado (ya no es 404 huérfano); `SecurityConfig` permite `/api/payments/webhook` y `/api/payments/webhook/**`.
+4. ✅ Estados sincronizados con la pasarela: `approved→PAID/APPROVED`; `rejected/cancelled/refunded→rechazo`; solo la pasarela (webhook firmado o confirmación sandbox) marca un pedido como `PAID`.
+5. ✅ Sandbox: `SandboxPaymentProvider` (por defecto en dev, rechazado en `prod`) simula la pasarela sin cobro real; `MercadoPagoPaymentProvider` real listo para credenciales; **sin claves `MERCADOPAGO_*` no se inventan** — queda preparado y documentado.
+- ✅ Extra: eliminados `POST /api/payments/process` y `GET /api/payments/reference/{ref}` (IDOR C4); paquete `integration.payment` con `PaymentProvider`/`PaymentContext`/`PaymentPreference`; migración `V12__payment_preference.sql` (`preference_id` + índices único `ux_payments_preference_id`, `idx_payments_provider_reference`, `idx_payments_order_id`).
+- ✅ Frontend: `paymentService.createCheckout/getStatus/confirmSandbox`; `Checkout.tsx` redirige a la pasarela (MP) o a la página de pago simulada; nueva `SandboxPaymentPage` (`/pago/sandbox`); `OrderConfirmation` refleja el estado de pago con sondeo automático mientras está `PENDING`.
+- ✅ Mapeo de `PaymentProcessingException` a HTTP 400 en `GlobalExceptionHandler`.
 
-**Criterio de salida:** flujo de pago sandbox verificado de extremo a extremo; webhook actualiza pedido; sin posibilidad de marcar pagado sin pasarela.
+**Tests (81 en verde, +22):** PaymentService (13), MercadoPagoSignatureVerifier (4), SandboxPaymentProvider (2), MercadoPagoPaymentProvider (3) sobre los 59 previos. Frontend: `npm run lint` (0 errores, 9 warnings preexistentes) y `npm run build` OK.
+
+**Verificación E2E (sandbox, PostgreSQL local, `V12` aplicada):** registro→carrito→pedido (`PENDING`)→`checkout` (provider `sandbox`, `checkoutUrl` `/pago/sandbox?ref=…`, **no** marca pagado)→`sandbox/confirm` (pedido `PAID`/pago `APPROVED`)→`status` (`PAID`/`APPROVED`); confirmación y re-checkout idempotentes; webhook con firma inválida = `400` (no 404); `status` inexistente = `404`.
+
+**Riesgos:** el webhook real requiere `MERCADOPAGO_ACCESS_TOKEN` + `MERCADOPAGO_WEBHOOK_SECRET` y URL pública; los estados dependen de la notificación de MP (mitigado con consulta activa `GET /v1/payments/{id}`).
+**Criterio de salida:** ✅ flujo de pago sandbox verificado extremo a extremo; el webhook (y solo él, o la confirmación sandbox) actualiza el pedido; no es posible marcar `PAID` sin pasar por la pasarela.
 
 ---
 

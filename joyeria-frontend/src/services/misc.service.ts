@@ -1,19 +1,5 @@
 import api from './api'
-import type { ApiResponse, SocialLink } from '../types'
-
-export interface PaymentRequest {
-  orderId: number
-  paymentMethod: string
-}
-
-export interface PaymentResponse {
-  id: number
-  orderId: number
-  amount: number
-  method: string
-  status: string
-  transactionId?: string
-}
+import type { ApiResponse, SocialLink, CheckoutResponse, PaymentStatus } from '../types'
 
 export const socialService = {
   async getAll(): Promise<SocialLink[]> {
@@ -30,8 +16,18 @@ export const newsletterService = {
 }
 
 export const paymentService = {
-  async processPayment(paymentData: PaymentRequest): Promise<PaymentResponse> {
-    const { data } = await api.post<ApiResponse<PaymentResponse>>('/payments/process', paymentData)
+  async createCheckout(payload: { orderId: number; paymentMethod: string }): Promise<CheckoutResponse> {
+    const { data } = await api.post<ApiResponse<CheckoutResponse>>('/payments/checkout', payload)
+    return data.data
+  },
+
+  async getStatus(orderNumber: string): Promise<PaymentStatus> {
+    const { data } = await api.get<ApiResponse<PaymentStatus>>(`/payments/status/${orderNumber}`)
+    return data.data
+  },
+
+  async confirmSandbox(reference: string): Promise<PaymentStatus> {
+    const { data } = await api.post<ApiResponse<PaymentStatus>>('/payments/sandbox/confirm', { reference })
     return data.data
   },
 }

@@ -60,10 +60,12 @@ app:
 
 payment:
   provider: ${PAYMENT_PROVIDER:sandbox}
+  currency: ${PAYMENT_CURRENCY:COP}
   mercado-pago:
     public-key: ${MERCADOPAGO_PUBLIC_KEY:}
     access-token: ${MERCADOPAGO_ACCESS_TOKEN:}
     webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
+    notification-url: ${MERCADOPAGO_NOTIFICATION_URL:}
 
 email:
   from: ${EMAIL_FROM:no-reply@aurajoyeria.com}

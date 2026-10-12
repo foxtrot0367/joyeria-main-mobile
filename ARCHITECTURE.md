@@ -74,10 +74,10 @@ HTTP → RateLimitFilter → JwtAuthenticationFilter → Controller (@Valid DTO)
 
 **Reglas actuales de autorización:**
 - `/api/auth/**` y catálogo/lecturas: `permitAll`.
-- Endpoints de usuario: autenticado (ownership verificado en direcciones/pedidos; **falta en tickets y pagos**).
+- Endpoints de usuario: autenticado (ownership verificado en direcciones, pedidos y pagos; **falta en tickets**).
 - `/api/admin/**`: `hasRole('ADMIN')` + `@PreAuthorize` por controlador (doble barrera).
 
-**Inventario API:** 81 endpoints (27 públicos / 27 autenticados / 27 admin). Dos rutas `permitAll` sin implementar: `/api/support/tickets/guest`, `/api/payments/webhook/**`.
+**Inventario API:** 83 endpoints (28 públicos / 28 autenticados / 27 admin). Una ruta `permitAll` sin implementar: `/api/support/tickets/guest` (`/api/payments/webhook/**` implementado en Fase 5; `POST /api/payments/process` y `GET /api/payments/reference/{ref}` eliminados por IDOR).
 
 ---
 
@@ -170,7 +170,7 @@ PostgreSQL (Flyway V8+, índices, sin OSIV)
 
 **Cambios estructurales previstos:**
 - **Seguridad:** refresh tokens + rotación, logout real, cookies httpOnly (evaluar), Google OAuth verificado, rate limit confiable (Fase 3).
-- **Pagos:** integración Mercado Pago real (preferencia + webhook firmado + idempotencia); cero PAN en nuestros servidores (Fase 5).
+- **Pagos:** ✅ integración Mercado Pago real (preferencia de Checkout Pro + webhook con firma HMAC + idempotencia + reconciliación de montos); cero PAN en nuestros servidores; `SandboxPaymentProvider` simula la pasarela solo en dev (Fase 5).
 - **Observabilidad:** `spring-boot-starter-actuator` (`/actuator/health`), logs estructurados sin DEBUG en prod (Fase 12).
 - **CI/CD:** GitHub Actions (lint+tests+build por PR) (Fase 11).
 - **Testing:** MockMvc, Testcontainers/H2+Flyway, Vitest, E2E Playwright (Fase 10).

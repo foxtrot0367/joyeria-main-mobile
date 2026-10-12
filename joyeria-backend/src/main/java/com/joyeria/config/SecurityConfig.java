@@ -76,7 +76,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/newsletter/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/social-links").permitAll()
-                .requestMatchers("/api/payments/webhook/**").permitAll()
+                .requestMatchers("/api/payments/webhook", "/api/payments/webhook/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

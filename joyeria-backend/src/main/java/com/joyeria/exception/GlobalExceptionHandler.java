@@ -1,6 +1,7 @@
 package com.joyeria.exception;
 
 import com.joyeria.dto.ApiResponse;
+import com.joyeria.integration.payment.PaymentProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -86,7 +87,7 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("La operación viola una restricción de datos"));
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class, UnsupportedOperationException.class})
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class, UnsupportedOperationException.class, PaymentProcessingException.class})
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(RuntimeException e) {
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));

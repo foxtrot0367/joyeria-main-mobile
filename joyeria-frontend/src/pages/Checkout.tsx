@@ -89,8 +89,19 @@ export default function Checkout() {
         couponCode: appliedCoupon || undefined, notes: ''
       })
 
-      await paymentService.processPayment({ orderId: order.id, paymentMethod: payment.method })
-      navigate(`/pedido-confirmado/${order.orderNumber}`)
+      const checkout = await paymentService.createCheckout({
+        orderId: order.id, paymentMethod: payment.method,
+      })
+
+      if (checkout.paymentStatus === 'APPROVED') {
+        navigate(`/pedido-confirmado/${order.orderNumber}`)
+      } else if (checkout.provider === 'sandbox') {
+        navigate(`/pago/sandbox?ref=${encodeURIComponent(checkout.preferenceId ?? '')}&order=${order.orderNumber}`)
+      } else if (checkout.checkoutUrl) {
+        window.location.href = checkout.checkoutUrl
+      } else {
+        toast('No se pudo iniciar el pago. Intenta de nuevo.', 'error')
+      }
     } catch (err: unknown) {
       toast(getErrorMessage(err, 'Error al procesar el pago'), 'error')
     } finally { setLoading(false) }

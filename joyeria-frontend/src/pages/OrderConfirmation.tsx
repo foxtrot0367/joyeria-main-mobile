@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CheckCircle, MapPin, CreditCard, ArrowRight } from 'lucide-react'
+import { CheckCircle, MapPin, CreditCard, ArrowRight, Clock } from 'lucide-react'
 import { orderService } from '../services/order.service'
 import { useCart } from '../contexts/CartContext'
 import type { Order } from '../types'
@@ -15,13 +15,37 @@ export default function OrderConfirmation() {
   const [loading, setLoading] = useState(true)
   const { refreshCart } = useCart()
 
+  const loadOrder = useCallback(async () => {
+    if (!orderNumber) return null
+    try {
+      const o = await orderService.getByOrderNumber(orderNumber)
+      setOrder(o)
+      return o
+    } catch {
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }, [orderNumber])
+
   useEffect(() => {
-    if (!orderNumber) return
-    orderService.getByOrderNumber(orderNumber)
-      .then(o => { setOrder(o); setLoading(false) })
-      .catch(() => setLoading(false))
+    let active = true
+    let timer: number | undefined
+    let attempts = 0
+    const run = async () => {
+      const o = await loadOrder()
+      attempts += 1
+      if (active && o && o.status === 'PENDING' && attempts < 20) {
+        timer = window.setTimeout(run, 3000)
+      }
+    }
+    run()
     refreshCart()
-  }, [orderNumber, refreshCart])
+    return () => {
+      active = false
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [loadOrder, refreshCart])
 
   if (loading) {
     return <div className="max-w-3xl mx-auto px-4 py-20 text-center"><div className="w-10 h-10 border-2 border-[#C9A227]/30 border-t-[#C9A227] rounded-full animate-spin mx-auto" /></div>
@@ -36,15 +60,32 @@ export default function OrderConfirmation() {
     )
   }
 
+  const isPaid = order.status !== 'PENDING'
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center mb-10">
-        <div className="w-20 h-20 rounded-full bg-accent-green/10 flex items-center justify-center mx-auto mb-5">
-          <CheckCircle size={40} className="text-accent-green" />
-        </div>
-        <h1 className="font-serif text-3xl font-medium text-foreground mb-2">¡Gracias por tu compra!</h1>
-        <p className="text-foreground-faint">Tu pedido <span className="font-medium text-[#C9A227]">#{order.orderNumber}</span> fue confirmado.</p>
-        <p className="text-sm text-foreground-faint mt-2">Guarda tu número de pedido para hacer seguimiento.</p>
+        {isPaid ? (
+          <>
+            <div className="w-20 h-20 rounded-full bg-accent-green/10 flex items-center justify-center mx-auto mb-5">
+              <CheckCircle size={40} className="text-accent-green" />
+            </div>
+            <h1 className="font-serif text-3xl font-medium text-foreground mb-2">¡Gracias por tu compra!</h1>
+            <p className="text-foreground-faint">Tu pedido <span className="font-medium text-[#C9A227]">#{order.orderNumber}</span> fue confirmado.</p>
+            <p className="text-sm text-foreground-faint mt-2">Guarda tu número de pedido para hacer seguimiento.</p>
+          </>
+        ) : (
+          <>
+            <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-5">
+              <Clock size={40} className="text-amber-500" />
+            </div>
+            <h1 className="font-serif text-3xl font-medium text-foreground mb-2">Estamos confirmando tu pago</h1>
+            <p className="text-foreground-faint">Pedido <span className="font-medium text-[#C9A227]">#{order.orderNumber}</span></p>
+            <p className="text-sm text-foreground-faint mt-2">
+              En cuanto la pasarela confirme el pago, el estado se actualizará automáticamente.
+            </p>
+          </>
+        )}
       </motion.div>
 
       <div className="bg-surface rounded-lg border border-line/70 p-6 mb-6">

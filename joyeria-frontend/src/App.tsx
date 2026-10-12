@@ -36,6 +36,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const CartPage = lazy(() => import('./pages/CartPage'))
 const Checkout = lazy(() => import('./pages/Checkout'))
 const OrderConfirmation = lazy(() => import('./pages/OrderConfirmation'))
+const SandboxPaymentPage = lazy(() => import('./pages/SandboxPaymentPage'))
 const Profile = lazy(() => import('./pages/user/Profile'))
 const Orders = lazy(() => import('./pages/user/Orders'))
 const Addresses = lazy(() => import('./pages/user/Addresses'))
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="carrito" element={<Suspense fallback={<Loader />}><CartPage /></Suspense>} />
           <Route path="checkout" element={<ProtectedRoute><Suspense fallback={<Loader />}><Checkout /></Suspense></ProtectedRoute>} />
           <Route path="pedido-confirmado/:orderNumber" element={<ProtectedRoute><Suspense fallback={<Loader />}><OrderConfirmation /></Suspense></ProtectedRoute>} />
+          <Route path="pago/sandbox" element={<ProtectedRoute><Suspense fallback={<Loader />}><SandboxPaymentPage /></Suspense></ProtectedRoute>} />
           <Route path="cuenta" element={<ProtectedRoute><Suspense fallback={<Loader />}><Profile /></Suspense></ProtectedRoute>} />
           <Route path="cuenta/pedidos" element={<ProtectedRoute><Suspense fallback={<Loader />}><Orders /></Suspense></ProtectedRoute>} />
           <Route path="cuenta/direcciones" element={<ProtectedRoute><Suspense fallback={<Loader />}><Addresses /></Suspense></ProtectedRoute>} />
