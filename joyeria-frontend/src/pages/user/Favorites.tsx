@@ -9,12 +9,15 @@ import Button from '../../components/Button'
 import { useToast } from '../../contexts/ToastContext'
 import { useCart } from '../../contexts/CartContext'
 import { getErrorMessage } from '../../utils/errors'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 export default function Favorites() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
   const { addItem } = useCart()
+
+  useDocumentTitle('Mis favoritos')
 
   useEffect(() => { load() }, [])
 

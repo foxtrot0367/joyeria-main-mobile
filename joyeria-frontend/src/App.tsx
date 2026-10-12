@@ -87,6 +87,7 @@ export default function App() {
           <Route path="terminos" element={<Suspense fallback={<Loader />}><Terms /></Suspense>} />
           <Route path="cookies" element={<Suspense fallback={<Loader />}><CookiesPage /></Suspense>} />
           <Route path="redes-sociales" element={<Suspense fallback={<Loader />}><SocialLinks /></Suspense>} />
+          <Route path="*" element={<Suspense fallback={<Loader />}><NotFound /></Suspense>} />
         </Route>
 
         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
@@ -101,8 +102,6 @@ export default function App() {
           <Route path="cupones" element={<Suspense fallback={<Loader />}><AdminCoupons /></Suspense>} />
           <Route path="redes-sociales" element={<Suspense fallback={<Loader />}><AdminSocialLinks /></Suspense>} />
         </Route>
-
-        <Route path="*" element={<Suspense fallback={<Loader />}><NotFound /></Suspense>} />
       </Routes>
       <CookieConsent />
     </>

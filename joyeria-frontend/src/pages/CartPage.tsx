@@ -3,12 +3,16 @@ import { motion } from 'framer-motion'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, AlertCircle, X } from 'lucide-react'
 import { useCart } from '../contexts/CartContext'
 import Button from '../components/Button'
+import SmartImage from '../components/SmartImage'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import { formatPrice } from '../utils/format'
 import { calculateShipping, FREE_SHIPPING_THRESHOLD } from '../utils/shipping'
 
 export default function CartPage() {
   const { cart, updateQuantity, removeItem, error, clearError, pendingItemId } = useCart()
   const navigate = useNavigate()
+
+  useDocumentTitle('Carrito')
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -49,7 +53,7 @@ export default function CartPage() {
               <motion.div key={item.id} layout className="bg-surface rounded-lg border border-line/70 p-4 flex gap-4">
                 <Link to={`/productos/${item.productSlug}`} className="shrink-0">
                   <div className="w-24 h-24 rounded-lg overflow-hidden bg-background-warm">
-                    {item.productImage ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-foreground/20">J</div>}
+                    <SmartImage src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
                   </div>
                 </Link>
                 <div className="flex-1">

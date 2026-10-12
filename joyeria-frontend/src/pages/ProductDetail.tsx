@@ -13,6 +13,8 @@ import ProductCard from '../components/ProductCard'
 import Price from '../components/Price'
 import ReviewCard from '../components/ReviewCard'
 import Skeleton from '../components/Skeleton'
+import SmartImage from '../components/SmartImage'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function ProductDetail() {
   const { slug } = useParams()
@@ -27,6 +29,8 @@ export default function ProductDetail() {
   const { addItem } = useCart()
   const { isAuthenticated } = useAuth()
   const { toast } = useToast()
+
+  useDocumentTitle(product ? product.name : 'Producto')
 
   useAbortableEffect((signal) => {
     if (!slug) return
@@ -86,7 +90,7 @@ export default function ProductDetail() {
           <AnimatePresence mode="wait">
             <motion.div key={activeImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="aspect-square rounded-xl overflow-hidden bg-background-warm border border-line/70 mb-4">
-              <img src={images[activeImage].url} alt={product.name || 'Joya'} decoding="async" onError={e => { (e.target as HTMLImageElement).src = '' }}
+              <SmartImage src={images[activeImage].url} alt={product.name || 'Joya'} eager
                 className="w-full h-full object-cover" />
             </motion.div>
           </AnimatePresence>
@@ -95,7 +99,7 @@ export default function ProductDetail() {
               {images.map((img, i) => (
                 <button key={img.id} onClick={() => setActiveImage(i)}
                   className={`aspect-square rounded-lg overflow-hidden border-2 transition ${i === activeImage ? 'border-[#C9A227]' : 'border-transparent opacity-60 hover:opacity-100'}`}>
-                  <img src={img.url} alt={img.alt || ''} decoding="async" className="w-full h-full object-cover" />
+                  <SmartImage src={img.url} alt={img.alt || ''} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

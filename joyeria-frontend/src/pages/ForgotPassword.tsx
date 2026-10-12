@@ -6,12 +6,15 @@ import { useToast } from '../contexts/ToastContext'
 import { authService } from '../services/auth.service'
 import Button from '../components/Button'
 import { getErrorMessage } from '../utils/errors'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const { toast } = useToast()
+
+  useDocumentTitle('Recuperar contraseña')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

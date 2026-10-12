@@ -4,6 +4,7 @@ import { Heart, ShoppingCart, Eye } from 'lucide-react'
 import type { Product } from '../types'
 import Price from './Price'
 import Rating from './Rating'
+import SmartImage from './SmartImage'
 
 interface Props {
   product: Product
@@ -13,10 +14,8 @@ interface Props {
   isFavorite?: boolean
 }
 
-const PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNTAwIiB2aWV3Qm94PSIwIDAgNDAwIDUwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI0Y3RjVGMCIvPjxwYXRoIGQ9Ik0yMDAgMjAwIGw1MiAzMCAtNTIgMzAgLTUyLTMwWiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQzlBMjI3IiBzdHJva2Utd2lkdGg9IjEuNiIvPjxwYXRoIGQ9Ik0yMDAgMjIyIGwyMCAxMS41IC0yMCAxMS41IC0yMC0xMS41WiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjQzlBMjI3IiBzdHJva2Utd2lkdGg9IjEiIG9wYWNpdHk9IjAuNSIvPjx0ZXh0IHg9IjIwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iR2VvcmdpYSwgc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGxldHRlci1zcGFjaW5nPSI5IiBmaWxsPSIjQjlBOTZCIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5BVVJBPC90ZXh0Pjwvc3ZnPg=='
-
 export default function ProductCard({ product, onAddToCart, onQuickView, onToggleFavorite, isFavorite }: Props) {
-  const img = product.images?.length ? product.images[0].url : PLACEHOLDER
+  const img = product.images?.length ? product.images[0].url : ''
   const img2 = product.images && product.images.length > 1 ? product.images[1].url : ''
   const reduced = useReducedMotion()
   const lowStock = product.stock > 0 && product.stock <= 5
@@ -31,13 +30,11 @@ export default function ProductCard({ product, onAddToCart, onQuickView, onToggl
       {/* Image */}
       <div className="relative aspect-[4/5] overflow-hidden bg-surface-muted">
         <Link to={`/productos/${product.slug}`} className="block h-full">
-          <img src={img} alt={product.name} loading="lazy" decoding="async"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-            onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER }} />
+          <SmartImage src={img} alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
           {img2 && (
-            <img src={img2} alt="" aria-hidden loading="lazy" decoding="async"
-              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              onError={e => { e.currentTarget.style.display = 'none' }} />
+            <SmartImage src={img2} alt="" aria-hidden
+              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           )}
         </Link>
 

@@ -7,12 +7,15 @@ import UserNav from '../../components/UserNav'
 import Button from '../../components/Button'
 import Pagination from '../../components/Pagination'
 import { formatPrice, formatDate, getStatusLabel, getStatusColor } from '../../utils/format'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([])
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
+
+  useDocumentTitle('Mis pedidos')
 
   useEffect(() => { load() }, [page])
 

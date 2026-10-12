@@ -10,6 +10,7 @@ import { useCart } from '../contexts/CartContext'
 import { useToast } from '../contexts/ToastContext'
 import { formatPrice } from '../utils/format'
 import Skeleton from '../components/Skeleton'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const WHATSAPP = '573001234567'
 
@@ -32,6 +33,8 @@ export default function Personalize() {
   const { addItem } = useCart()
   const { toast } = useToast()
   const reduced = useReducedMotion()
+
+  useDocumentTitle('Personalizar joya')
 
   const [available, setAvailable] = useState<Product[]>([])
   const [catLabels, setCatLabels] = useState<Record<number, string>>({})

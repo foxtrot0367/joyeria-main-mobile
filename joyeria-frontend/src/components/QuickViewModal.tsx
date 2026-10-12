@@ -5,14 +5,13 @@ import { X, ShoppingCart, Ruler, Truck, Package } from 'lucide-react'
 import type { Product } from '../types'
 import Price from './Price'
 import Rating from './Rating'
+import SmartImage from './SmartImage'
 
 interface Props {
   product: Product | null
   onClose: () => void
   onAddToCart?: (id: number, qty: number) => void
 }
-
-const PLACEHOLDER = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0dC93d3cudzMub3JnLzIwMDAvc3ZnJyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjUwMCIgdmlld0JveD0iMCAwIDQwMCA1MDAiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNGN0Y1RjAiLz48dGV4dCB4PSIyMDAiIHk9IjI1MCIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsIHNlcmlmIiBmb250LXNpemU9IjI0IiBsZXR0ZXItc3BhY2luZz0iOSIgZmlsbD0iI0I5QTk2QiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QVVSQTwvdGV4dD48L3N2Zz4='
 
 export default function QuickViewModal({ product, onClose, onAddToCart }: Props) {
   const [active, setActive] = useState(0)
@@ -38,7 +37,7 @@ export default function QuickViewModal({ product, onClose, onAddToCart }: Props)
   if (!product) return null
 
   const images = product.images?.length ? product.images : []
-  const img = images[active]?.url || PLACEHOLDER
+  const img = images[active]?.url
   const outOfStock = product.stock <= 0
   const rawSpecs: Array<[string, string | undefined]> = [
     ['Material', product.materialNames?.join(', ')],
@@ -55,6 +54,9 @@ export default function QuickViewModal({ product, onClose, onAddToCart }: Props)
         <motion.div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label={product.name}
           initial={reduced ? { opacity: 1 } : { opacity: 0, y: 24, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
@@ -69,16 +71,14 @@ export default function QuickViewModal({ product, onClose, onAddToCart }: Props)
             {/* Gallery */}
             <div className="bg-surface-muted md:border-r border-line/70 p-4">
               <div className="aspect-[4/5] rounded-lg overflow-hidden bg-surface-muted">
-                <img src={img} alt={product.name} decoding="async" className="w-full h-full object-cover"
-                  onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER }} />
+                <SmartImage src={img} alt={product.name} className="w-full h-full object-cover" />
               </div>
               {images.length > 1 && (
                 <div className="flex gap-2 mt-3">
                   {images.map((im, i) => (
                     <button key={i} onClick={() => setActive(i)}
                       className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition ${i === active ? 'border-[#C9A227]' : 'border-transparent opacity-70 hover:opacity-100'}`}>
-                      <img src={im.url} alt={im.alt || ''} decoding="async" className="w-full h-full object-cover"
-                        onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER }} />
+                      <SmartImage src={im.url} alt={im.alt || ''} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>

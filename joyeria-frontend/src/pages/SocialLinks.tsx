@@ -4,6 +4,7 @@ import { Instagram, Facebook, Twitter, Youtube, Linkedin, ExternalLink, Link2 } 
 import { socialService } from '../services/misc.service'
 import type { SocialLink } from '../types'
 import Skeleton from '../components/Skeleton'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const icons: Record<string, React.ComponentType<{ size?: number | string }>> = {
   instagram: Instagram, facebook: Facebook, twitter: Twitter, youtube: Youtube, linkedin: Linkedin,
@@ -12,6 +13,8 @@ const icons: Record<string, React.ComponentType<{ size?: number | string }>> = {
 export default function SocialLinks() {
   const [links, setLinks] = useState<SocialLink[]>([])
   const [loading, setLoading] = useState(true)
+
+  useDocumentTitle('Redes sociales')
 
   useEffect(() => {
     socialService.getAll().then(l => { setLinks(l); setLoading(false) }).catch(() => setLoading(false))

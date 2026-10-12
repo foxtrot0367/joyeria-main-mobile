@@ -187,13 +187,23 @@
 
 ---
 
-## FASE 7 — UI/UX
+## FASE 7 — UI/UX ✅ (completada 2026-10-11)
 
 **Objetivo:** dirección visual premium de joyería (elegante, minimalista, editorial; dorado como acento).
 
-**Tareas:** rediseño progresivo por páginas: Home → catálogo → producto → carrito → checkout → perfil → admin. Tipografía, whitespace, jerarquía, microinteracciones suaves, cards consistentes. Corregir: rating fabricado (F-M9), imágenes sin fallback (F-M8), modal accesible (F-M13), `document.title` por ruta (F-M10), newsletter real (F-M7), NotFound dentro del layout.
+**Tareas:**
+1. ✅ Base premium consolidada: tipografía editorial (Playfair Display + Inter), paletas ivory/espresso con `darkMode`, tokens HSL de marca (`primary`, `surface`, `foreground`, `line`), `prefers-reduced-motion` respetado y microinteracciones suaves (framer-motion) consistentes en Home, catálogo, producto, carrito, checkout, cuenta y admin.
+2. ✅ Imágenes robustas: nuevo componente compartido `SmartImage` con placeholder del diamante AURA + `onError` + `loading="lazy"`/`decoding="async"` (F-M8, F-M14); sustituye el código duplicado en `ProductCard`, `Showcase`, `QuickViewModal` y corrige el fallback roto de `ProductDetail` (antes dejaba `src=''`) y los thumbnails de carrito/checkout.
+3. ✅ Modal accesible (F-M13): `role="dialog"`, `aria-modal`, `aria-labelledby`, cierre con `Escape`, trampa de foco (Tab/Shift+Tab), foco inicial y restauración del foco al cerrar.
+4. ✅ `document.title` por ruta (F-M10): hook `useDocumentTitle` aplicado en todas las páginas de tienda/cuenta/legal (Home, catálogo, producto, carrito, checkout, login/registro/recuperación, cuenta, pedidos, direcciones, favoritos, soporte, FAQ, legales) + sitemap ampliado (`/personaliza`).
+5. ✅ Newsletter real en el Home (F-M7): `newsletterService.subscribe` con estado de envío y feedback de éxito/error (antes solo mostraba un toast falso).
+6. ✅ 404 dentro del layout: la ruta `*` vive bajo `MainLayout` (mantiene Navbar/Footer) con título propio.
+7. ✅ Consentimiento de cookies con efecto real (F-M14): se guarda `{ type, ts, version }` y se emite el evento `cookie-consent` consumible por analítica.
+8. ✅ Admin responsive (F-A5): sidebar colapsable con barra superior y drawer en móvil (overlay + cierre con Escape), contenido con padding adaptativo; se conserva la navegación por secciones.
 
 **Riesgo:** no romper funcionalidad existente al tocar componentes; verificar cada página tras rediseñarla.
+
+**Verificación:** `npm run lint` (0 errores, 10 warnings preexistentes `react-hooks/exhaustive-deps`), `npm run build` (tsc + vite) OK. Cambios solo de frontend; sin migraciones ni cambios de API.
 
 ---
 

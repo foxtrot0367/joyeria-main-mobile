@@ -8,6 +8,7 @@ import Modal from '../../components/Modal'
 import UserNav from '../../components/UserNav'
 import Skeleton from '../../components/Skeleton'
 import { getErrorMessage } from '../../utils/errors'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 interface AddressForm {
   firstName: string
@@ -35,6 +36,8 @@ export default function Addresses() {
   const [form, setForm] = useState<typeof empty>(empty)
   const [saving, setSaving] = useState(false)
   const { toast } = useToast()
+
+  useDocumentTitle('Mis direcciones')
 
   const load = async () => {
     setLoading(true)

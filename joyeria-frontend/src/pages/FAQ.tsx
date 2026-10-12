@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, HelpCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const faqs = [
   {
@@ -32,6 +33,8 @@ const faqs = [
 
 export default function FAQ() {
   const [open, setOpen] = useState<number | null>(0)
+
+  useDocumentTitle('Preguntas frecuentes')
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

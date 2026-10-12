@@ -8,12 +8,15 @@ import type { Order } from '../types'
 import Button from '../components/Button'
 import OrderTimeline from '../components/OrderTimeline'
 import { formatPrice, formatDate, getStatusLabel, getStatusColor } from '../utils/format'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function OrderConfirmation() {
   const { orderNumber } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const { refreshCart } = useCart()
+
+  useDocumentTitle('Pedido confirmado')
 
   const loadOrder = useCallback(async () => {
     if (!orderNumber) return null

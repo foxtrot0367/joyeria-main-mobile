@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { getErrorMessage } from '../utils/errors'
 import Button from '../components/Button'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function Register() {
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' })
@@ -14,6 +15,8 @@ export default function Register() {
   const { register } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
+
+  useDocumentTitle('Crear cuenta')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value })
 

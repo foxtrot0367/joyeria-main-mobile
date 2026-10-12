@@ -5,6 +5,7 @@ import { ArrowRight, Star, Shield, Truck, Award, BadgeCheck, Gem, Sparkles, Penc
 import { productService } from '../services/product.service'
 import { categoryService } from '../services/category.service'
 import { materialService } from '../services/material.service'
+import { newsletterService } from '../services/misc.service'
 import type { Product, Category, Review, Material } from '../types'
 import Showcase from '../components/Showcase'
 import QuickViewModal from '../components/QuickViewModal'
@@ -13,6 +14,8 @@ import { useCart } from '../contexts/CartContext'
 import { useToast } from '../contexts/ToastContext'
 import { userService } from '../services/user.service'
 import Skeleton from '../components/Skeleton'
+import useDocumentTitle from '../hooks/useDocumentTitle'
+import { getErrorMessage } from '../utils/errors'
 
 const heroSlides = [
   { eyebrow: 'La Colección 2026', title: 'El brillo que nunca se apaga', subtitle: 'Formas puras, luz cálida y acabados impecables para el día a día y para siempre.' },
@@ -60,10 +63,14 @@ export default function Home() {
   const [heroIndex, setHeroIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [quickView, setQuickView] = useState<Product | null>(null)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [subscribing, setSubscribing] = useState(false)
   const parallaxRef = useRef<HTMLElement>(null)
   const reduced = useReducedMotion()
   const { addItem } = useCart()
   const { toast } = useToast()
+
+  useDocumentTitle()
 
   const heroProducts = bestSellers.length >= HERO_IMAGES ? bestSellers.slice(0, HERO_IMAGES) : bestSellers
 
@@ -99,6 +106,21 @@ export default function Home() {
   const handleAddToCart = async (id: number, qty = 1) => {
     try { await addItem(id, qty); toast('Agregado al carrito') }
     catch { toast('Error al agregar', 'error') }
+  }
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newsletterEmail.trim()) return
+    setSubscribing(true)
+    try {
+      const message = await newsletterService.subscribe(newsletterEmail.trim())
+      toast(message || '¡Gracias por suscribirte!')
+      setNewsletterEmail('')
+    } catch (err) {
+      toast(getErrorMessage(err, 'No pudimos completar tu suscripción'), 'error')
+    } finally {
+      setSubscribing(false)
+    }
   }
 
   const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }
@@ -546,10 +568,13 @@ export default function Home() {
         <div className="max-w-2xl mx-auto px-4 text-center text-white">
           <h2 className="font-serif text-3xl font-medium mb-4">Únete al círculo AURA</h2>
           <p className="text-white/85 mb-6">Recibe ofertas exclusivas, adelantos de colección y contenido especial directamente en tu correo.</p>
-          <form onSubmit={e => { e.preventDefault(); toast('¡Gracias por suscribirte!') }}
-            className="flex max-w-md mx-auto">
-            <input type="email" placeholder="Tu email" required className="flex-1 bg-white/20 backdrop-blur text-white placeholder-white/70 rounded-l-full px-5 py-3 outline-none border border-white/30 focus:border-white" />
-            <button type="submit" className="bg-foreground text-background px-7 py-3 rounded-r-full font-medium hover:opacity-90 transition-opacity">Suscribir</button>
+          <form onSubmit={handleSubscribe} className="flex max-w-md mx-auto">
+            <input type="email" value={newsletterEmail} onChange={e => setNewsletterEmail(e.target.value)} placeholder="Tu email" required
+              className="flex-1 bg-white/20 backdrop-blur text-white placeholder-white/70 rounded-l-full px-5 py-3 outline-none border border-white/30 focus:border-white" />
+            <button type="submit" disabled={subscribing}
+              className="bg-foreground text-background px-7 py-3 rounded-r-full font-medium hover:opacity-90 transition-opacity disabled:opacity-60">
+              {subscribing ? 'Enviando…' : 'Suscribir'}
+            </button>
           </form>
         </div>
       </section>

@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import Button from '../components/Button'
 import { getErrorMessage } from '../utils/errors'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -17,6 +18,8 @@ export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const expiredMessage = (location.state as { message?: string } | null)?.message
+
+  useDocumentTitle('Iniciar sesión')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

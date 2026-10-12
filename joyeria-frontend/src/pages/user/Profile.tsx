@@ -7,6 +7,7 @@ import UserNav from '../../components/UserNav'
 import Skeleton from '../../components/Skeleton'
 import type { User as UserType } from '../../types'
 import { getErrorMessage } from '../../utils/errors'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 export default function Profile() {
   const [profile, setProfile] = useState<UserType | null>(null)
@@ -15,6 +16,8 @@ export default function Profile() {
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [changingPassword, setChangingPassword] = useState(false)
   const { toast } = useToast()
+
+  useDocumentTitle('Mi cuenta')
 
   useEffect(() => {
     userService.getProfile().then(u => { setProfile(u); setLoading(false) }).catch(() => setLoading(false))

@@ -13,6 +13,7 @@ import { ProductCardSkeleton } from '../components/Skeleton'
 import Pagination from '../components/Pagination'
 import { useCart } from '../contexts/CartContext'
 import { useToast } from '../contexts/ToastContext'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const COLOR_OPTIONS = ['Dorado', 'Plateado', 'Blanco', 'Azul', 'Rosa', 'Verde']
 
@@ -39,6 +40,8 @@ export default function Catalog() {
   const page = parseInt(searchParams.get('page') || '0')
   const minPrice = searchParams.get('minPrice') || ''
   const maxPrice = searchParams.get('maxPrice') || ''
+
+  useDocumentTitle(query ? `Resultados: ${query}` : 'Productos')
 
   useEffect(() => {
     categoryService.getAll().then(setCategories).catch(() => {})

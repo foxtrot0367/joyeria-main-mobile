@@ -1,3 +1,5 @@
+import useDocumentTitle from '../hooks/useDocumentTitle'
+
 const cookieTypes = [
   {
     title: 'Cookies esenciales',
@@ -22,6 +24,8 @@ const cookieTypes = [
 ]
 
 export default function CookiesPage() {
+  useDocumentTitle('Política de cookies')
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <h1 className="font-serif text-3xl font-medium text-foreground mb-2">Política de cookies</h1>

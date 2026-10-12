@@ -8,6 +8,8 @@ import { orderService } from '../services/order.service'
 import { paymentService } from '../services/misc.service'
 import { cartService } from '../services/cart.service'
 import Button from '../components/Button'
+import SmartImage from '../components/SmartImage'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import { formatPrice } from '../utils/format'
 import { getErrorMessage } from '../utils/errors'
 import { calculateShipping } from '../utils/shipping'
@@ -27,6 +29,8 @@ export default function Checkout() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const cartSubtotal = cart?.subtotal || 0
+
+  useDocumentTitle('Finalizar compra')
 
   useEffect(() => {
     if (!cart || cart.items.length === 0) { setSummary(null); return }
@@ -219,7 +223,7 @@ export default function Checkout() {
               {cart.items.map(item => (
                 <div key={item.id} className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded bg-background-warm flex items-center justify-center text-[10px] text-foreground/20 shrink-0">
-                    {item.productImage ? <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover rounded" /> : '🪙'}
+                    <SmartImage src={item.productImage} alt={item.productName} className="w-full h-full object-cover rounded" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground truncate">{item.productName}</p>

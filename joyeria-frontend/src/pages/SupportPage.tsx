@@ -8,6 +8,7 @@ import type { SupportTicket } from '../types'
 import Button from '../components/Button'
 import { formatDate, getStatusLabel, getStatusColor } from '../utils/format'
 import { getErrorMessage } from '../utils/errors'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 const categories = ['Consulta de producto', 'Estado de pedido', 'Devolución o cambio', 'Pago y facturación', 'Otro']
 
@@ -21,6 +22,8 @@ export default function SupportPage() {
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
   const { toast } = useToast()
+
+  useDocumentTitle('Soporte')
 
   useEffect(() => {
     if (!isAuthenticated) { setTickets([]); return }

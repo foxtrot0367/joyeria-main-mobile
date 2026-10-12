@@ -7,11 +7,14 @@ import { getErrorMessage } from '../utils/errors'
 import { formatPrice } from '../utils/format'
 import Button from '../components/Button'
 import type { PaymentStatus } from '../types'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function SandboxPaymentPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { toast } = useToast()
+
+  useDocumentTitle('Pago')
   const reference = params.get('ref') || ''
   const orderNumber = params.get('order') || ''
   const [status, setStatus] = useState<PaymentStatus | null>(null)
