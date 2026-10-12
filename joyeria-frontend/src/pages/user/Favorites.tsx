@@ -7,11 +7,14 @@ import UserNav from '../../components/UserNav'
 import ProductCard from '../../components/ProductCard'
 import Button from '../../components/Button'
 import { useToast } from '../../contexts/ToastContext'
+import { useCart } from '../../contexts/CartContext'
+import { getErrorMessage } from '../../utils/errors'
 
 export default function Favorites() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+  const { addItem } = useCart()
 
   useEffect(() => { load() }, [])
 
@@ -28,6 +31,15 @@ export default function Favorites() {
     await userService.toggleFavorite(id)
     toast('Eliminado de favoritos', 'info')
     load()
+  }
+
+  const addToCart = async (id: number) => {
+    try {
+      await addItem(id)
+      toast('Agregado al carrito')
+    } catch (err) {
+      toast(getErrorMessage(err, 'No se pudo agregar al carrito'), 'error')
+    }
   }
 
   if (loading) {
@@ -48,7 +60,7 @@ export default function Favorites() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map(p => (
             <div key={p.id} className="relative">
-              <ProductCard product={p} />
+              <ProductCard product={p} onAddToCart={addToCart} />
               <button onClick={() => remove(p.id)}
                 className="absolute top-2 right-2 z-10 bg-surface p-2 rounded-full shadow text-red-500 hover:bg-red-50 transition"
                 title="Quitar de favoritos">

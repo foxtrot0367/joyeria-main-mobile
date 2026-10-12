@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, ShoppingCart, ChevronRight, Truck, Shield, Award, Star } from 'lucide-react'
+import { Heart, ShoppingCart, ChevronRight, Truck, Shield, Award, Star, Minus, Plus } from 'lucide-react'
 import { productService } from '../services/product.service'
 import { userService } from '../services/user.service'
 import useAbortableEffect from '../hooks/useAbortableEffect'
@@ -22,7 +22,7 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [activeImage, setActiveImage] = useState(0)
-  const [quantity] = useState(1)
+  const [quantity, setQuantity] = useState(1)
   const [isFavorite, setIsFavorite] = useState(false)
   const { addItem } = useCart()
   const { isAuthenticated } = useAuth()
@@ -113,8 +113,10 @@ export default function ProductDetail() {
             <p className="mt-4 text-xs text-foreground-faint">SKU: {product.sku} | Stock: {product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}</p>
 
             <div className="my-6 flex items-center gap-2">
-              {[1,2,3,4,5].map(i => <Star key={i} size={16} className={i <= 5 ? 'text-[#C9A227] fill-[#C9A227]' : 'text-foreground/20'} />)}
-              <span className="text-xs text-foreground-faint">5.0 · {reviews.length} opiniones</span>
+              <div className="flex items-center gap-0.5">
+                {[1,2,3,4,5].map(i => <Star key={i} size={16} className={i <= Math.round(product.averageRating || 0) ? 'text-[#C9A227] fill-[#C9A227]' : 'text-foreground/20'} />)}
+              </div>
+              <span className="text-xs text-foreground-faint">{(product.averageRating || 0).toFixed(1)} · {product.reviewCount || 0} opiniones</span>
             </div>
 
             <p className="text-foreground-faint leading-relaxed mb-6">{product.description}</p>
@@ -143,6 +145,19 @@ export default function ProductDetail() {
               <div className="mb-6 p-4 bg-background-warm rounded-lg">
                 <h3 className="font-medium text-sm text-foreground mb-1">Cuidados</h3>
                 <p className="text-xs text-foreground-faint">{product.careInstructions}</p>
+              </div>
+            )}
+
+            {product.stock > 0 && (
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-sm text-foreground-faint">Cantidad</span>
+                <div className="flex items-center border border-line rounded-lg">
+                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1} aria-label="Disminuir cantidad"
+                    className="p-2 text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed"><Minus size={14} /></button>
+                  <span className="w-10 text-center text-sm">{quantity}</span>
+                  <button onClick={() => setQuantity(q => Math.min(product.stock, q + 1))} disabled={quantity >= product.stock} aria-label="Aumentar cantidad"
+                    className="p-2 text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed"><Plus size={14} /></button>
+                </div>
               </div>
             )}
 
