@@ -16,13 +16,15 @@ import java.util.Map;
 public class DashboardStatsDTO {
     private Long totalOrders;
     private BigDecimal totalRevenue;
+    private BigDecimal todayRevenue;
+    private BigDecimal monthRevenue;
     private Long totalProducts;
     private Long totalUsers;
     private Long totalCustomers;
     private Long pendingOrders;
     private Long lowStockProducts;
     private Long outOfStockProducts;
-    private List<Map<String, Object>> topSellingProducts;
+    private List<TopProductDTO> topSellingProducts;
     private List<Map<String, Object>> recentOrders;
     private Map<String, Long> ordersByStatus;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShoppingCart, DollarSign, Package, Users, AlertTriangle, Clock } from 'lucide-react'
+import { ShoppingCart, DollarSign, Package, Users, AlertTriangle, Clock, TrendingUp } from 'lucide-react'
 import { adminService } from '../../services/admin.service'
 import { orderService } from '../../services/order.service'
 import type { DashboardStats, Order } from '../../types'
@@ -28,9 +28,11 @@ export default function Dashboard() {
 
   const cards = [
     { label: 'Ventas totales', value: formatPrice(stats.totalRevenue), icon: DollarSign, color: 'text-[#C9A227] bg-[#C9A227]/10' },
+    { label: 'Ventas hoy', value: formatPrice(stats.todayRevenue ?? 0), icon: TrendingUp, color: 'text-accent-green bg-accent-green/10' },
+    { label: 'Ventas del mes', value: formatPrice(stats.monthRevenue ?? 0), icon: TrendingUp, color: 'text-blue-500 bg-blue-50' },
     { label: 'Pedidos', value: stats.totalOrders, icon: ShoppingCart, color: 'text-blue-500 bg-blue-50' },
     { label: 'Productos', value: stats.totalProducts, icon: Package, color: 'text-purple-500 bg-purple-50' },
-    { label: 'Usuarios', value: stats.totalUsers, icon: Users, color: 'text-accent-green bg-accent-green/10' },
+    { label: 'Clientes', value: stats.totalCustomers ?? 0, icon: Users, color: 'text-accent-green bg-accent-green/10' },
   ]
 
   const statusEntries = stats.ordersByStatus ? Object.entries(stats.ordersByStatus) : []
@@ -42,7 +44,7 @@ export default function Dashboard() {
         <p className="text-sm text-foreground-faint">Resumen general de la tienda</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {cards.map(c => (
           <div key={c.label} className="bg-surface rounded-lg border border-line/70 p-5">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${c.color}`}>
@@ -112,6 +114,23 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {stats.topSellingProducts && stats.topSellingProducts.length > 0 && (
+        <div className="bg-surface rounded-lg border border-line/70 p-5 mb-6">
+          <h2 className="font-medium text-foreground mb-4">Más vendidos</h2>
+          <div className="space-y-3">
+            {stats.topSellingProducts.map(p => (
+              <div key={p.id} className="flex items-center gap-3 text-sm">
+                <div className="w-10 h-10 rounded bg-background-warm overflow-hidden shrink-0 flex items-center justify-center">
+                  {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" /> : <span className="text-foreground/20">J</span>}
+                </div>
+                <span className="flex-1 text-foreground truncate">{p.name}</span>
+                <span className="text-foreground-faint whitespace-nowrap">{p.soldCount} vendidos</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {(stats.lowStockProducts || stats.outOfStockProducts) ? (
         <div className="bg-background-warm rounded-lg border border-line/70 p-5 flex flex-wrap gap-6 items-center">

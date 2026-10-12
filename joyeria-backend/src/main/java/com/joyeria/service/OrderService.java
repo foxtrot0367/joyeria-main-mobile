@@ -6,6 +6,7 @@ import com.joyeria.exception.ResourceNotFoundException;
 import com.joyeria.model.*;
 import com.joyeria.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,8 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +40,9 @@ public class OrderService {
     private final CouponRepository couponRepository;
     private final CouponService couponService;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Value("${app.low-stock-threshold:5}")
+    private int lowStockThreshold;
 
     @Transactional
     public OrderDTO createOrder(Long userId, OrderCreateRequest request) {
@@ -259,13 +266,43 @@ public class OrderService {
     }
 
     public DashboardStatsDTO getDashboardStats() {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime startOfMonth = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+
+        Map<String, Long> ordersByStatus = new LinkedHashMap<>();
+        for (Order.OrderStatus status : Order.OrderStatus.values()) {
+            ordersByStatus.put(status.name(), 0L);
+        }
+        for (Object[] row : orderRepository.countGroupByStatus()) {
+            ordersByStatus.put(((Order.OrderStatus) row[0]).name(), ((Number) row[1]).longValue());
+        }
+
+        List<TopProductDTO> topProducts = productRepository.findTop10ByActiveTrueOrderBySoldCountDesc()
+                .stream()
+                .limit(5)
+                .map(p -> TopProductDTO.builder()
+                        .id(p.getId())
+                        .name(p.getName())
+                        .soldCount(p.getSoldCount() != null ? p.getSoldCount().longValue() : 0L)
+                        .price(p.getPrice())
+                        .imageUrl(p.getImages().isEmpty() ? null : p.getImages().get(0).getUrl())
+                        .build())
+                .toList();
+
         return DashboardStatsDTO.builder()
                 .totalOrders(orderRepository.count())
                 .totalRevenue(orderRepository.sumTotalByPaymentStatus(Order.PaymentStatus.COMPLETED))
+                .todayRevenue(orderRepository.sumTotalByPaymentStatusSince(Order.PaymentStatus.COMPLETED, startOfDay))
+                .monthRevenue(orderRepository.sumTotalByPaymentStatusSince(Order.PaymentStatus.COMPLETED, startOfMonth))
                 .totalProducts(productRepository.count())
                 .totalUsers(userRepository.count())
+                .totalCustomers(userRepository.countByRole(UserRole.USER))
                 .pendingOrders(orderRepository.findByStatus(Order.OrderStatus.PENDING,
                         PageRequest.of(0, 1)).getTotalElements())
+                .lowStockProducts(productRepository.countByActiveTrueAndStockGreaterThanAndStockLessThanEqual(0, lowStockThreshold))
+                .outOfStockProducts(productRepository.countByActiveTrueAndStockLessThanEqual(0))
+                .topSellingProducts(topProducts)
+                .ordersByStatus(ordersByStatus)
                 .build();
     }
 

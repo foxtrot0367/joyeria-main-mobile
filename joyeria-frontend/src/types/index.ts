@@ -248,13 +248,15 @@ export interface AuthResponse {
 export interface DashboardStats {
   totalOrders: number
   totalRevenue: number
+  todayRevenue?: number
+  monthRevenue?: number
   totalProducts: number
   totalUsers: number
   pendingOrders: number
   totalCustomers?: number
   lowStockProducts?: number
   outOfStockProducts?: number
-  topSellingProducts?: Array<{ id: number; name: string; soldCount: number }>
+  topSellingProducts?: Array<{ id: number; name: string; soldCount: number; price?: number; imageUrl?: string | null }>
   recentOrders?: Array<{ id: number; orderNumber: string; total: number; status: string }>
   ordersByStatus?: Record<string, number>
 }

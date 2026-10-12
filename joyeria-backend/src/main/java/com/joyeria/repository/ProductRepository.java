@@ -27,6 +27,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByBestSellerTrueAndActiveTrue(Pageable pageable);
     List<Product> findTop10ByActiveTrueOrderBySoldCountDesc();
 
+    long countByActiveTrueAndStockLessThanEqual(int stock);
+
+    long countByActiveTrueAndStockGreaterThanAndStockLessThanEqual(int minExclusive, int maxInclusive);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findByIdForUpdate(@Param("id") Long id);

@@ -18,11 +18,13 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -263,5 +265,41 @@ class OrderServiceTest {
         assertEquals(0, new BigDecimal("750000").compareTo(stats.getTotalRevenue()));
         assertEquals(10L, stats.getTotalOrders());
         verify(orderRepository).sumTotalByPaymentStatus(Order.PaymentStatus.COMPLETED);
+    }
+
+    @Test
+    void getDashboardStats_ComputesFullMetrics() {
+        Product top = new Product();
+        top.setId(7L);
+        top.setName("Anillo de oro");
+        top.setPrice(new BigDecimal("50000"));
+        top.setSoldCount(9);
+
+        when(orderRepository.count()).thenReturn(10L);
+        when(orderRepository.sumTotalByPaymentStatus(Order.PaymentStatus.COMPLETED)).thenReturn(new BigDecimal("750000"));
+        when(orderRepository.sumTotalByPaymentStatusSince(eq(Order.PaymentStatus.COMPLETED), any()))
+                .thenReturn(new BigDecimal("100000"));
+        when(productRepository.count()).thenReturn(5L);
+        when(userRepository.count()).thenReturn(4L);
+        when(userRepository.countByRole(UserRole.USER)).thenReturn(3L);
+        when(orderRepository.findByStatus(eq(Order.OrderStatus.PENDING), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        when(productRepository.countByActiveTrueAndStockGreaterThanAndStockLessThanEqual(eq(0), anyInt())).thenReturn(2L);
+        when(productRepository.countByActiveTrueAndStockLessThanEqual(0)).thenReturn(1L);
+        when(productRepository.findTop10ByActiveTrueOrderBySoldCountDesc()).thenReturn(List.of(top));
+        when(orderRepository.countGroupByStatus())
+                .thenReturn(Collections.singletonList(new Object[]{Order.OrderStatus.PAID, 2L}));
+
+        DashboardStatsDTO stats = orderService.getDashboardStats();
+
+        assertEquals(3L, stats.getTotalCustomers());
+        assertEquals(2L, stats.getLowStockProducts());
+        assertEquals(1L, stats.getOutOfStockProducts());
+        assertEquals(2L, stats.getOrdersByStatus().get("PAID"));
+        assertEquals(0L, stats.getOrdersByStatus().get("PENDING"));
+        assertEquals(1, stats.getTopSellingProducts().size());
+        assertEquals(9L, stats.getTopSellingProducts().get(0).getSoldCount());
+        assertNotNull(stats.getTodayRevenue());
+        assertNotNull(stats.getMonthRevenue());
     }
 }
