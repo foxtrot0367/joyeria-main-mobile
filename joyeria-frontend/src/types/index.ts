@@ -89,6 +89,14 @@ export interface CartItem {
   subtotal: number
 }
 
+export interface CheckoutSummary {
+  subtotal: number
+  discount: number
+  shippingCost: number
+  total: number
+  couponCode: string | null
+}
+
 export interface Order {
   id: number
   orderNumber: string

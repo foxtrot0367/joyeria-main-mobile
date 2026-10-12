@@ -22,6 +22,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderService {
 
+    private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(500000);
+    private static final BigDecimal SHIPPING_COST = BigDecimal.valueOf(15000);
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
@@ -84,22 +87,15 @@ public class OrderService {
         }
 
         BigDecimal discount = BigDecimal.ZERO;
-        if (request.getCouponCode() != null && !request.getCouponCode().isBlank()) {
-            Coupon coupon = couponService.getValidCoupon(request.getCouponCode().trim().toUpperCase());
-            if (coupon.getMinAmount() != null && subtotal.compareTo(coupon.getMinAmount()) < 0) {
-                throw new IllegalStateException("El cupón requiere una compra mínima de " + coupon.getMinAmount());
-            }
-            if (coupon.getDiscountType() == Coupon.DiscountType.PERCENTAGE) {
-                discount = subtotal.multiply(coupon.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
-            } else {
-                discount = coupon.getDiscountValue().min(subtotal);
-            }
+        Coupon coupon = resolveCoupon(subtotal, request.getCouponCode());
+        if (coupon != null) {
+            discount = calculateDiscount(subtotal, coupon);
             coupon.setUsesCount(coupon.getUsesCount() + 1);
             couponRepository.save(coupon);
             order.setCouponCode(coupon.getCode());
         }
 
-        BigDecimal shippingCost = subtotal.compareTo(BigDecimal.valueOf(500000)) >= 0 ? BigDecimal.ZERO : BigDecimal.valueOf(15000);
+        BigDecimal shippingCost = calculateShipping(subtotal);
 
         order.setSubtotal(subtotal);
         order.setDiscount(discount);
@@ -115,6 +111,49 @@ public class OrderService {
         cartRepository.save(cart);
 
         return mapToDTO(order);
+    }
+
+    public CheckoutSummaryDTO summarizeCart(Long userId, String couponCode) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Carrito no encontrado"));
+
+        BigDecimal subtotal = cart.getItems().stream()
+                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Coupon coupon = resolveCoupon(subtotal, couponCode);
+        BigDecimal discount = coupon != null ? calculateDiscount(subtotal, coupon) : BigDecimal.ZERO;
+        BigDecimal shippingCost = calculateShipping(subtotal);
+
+        return CheckoutSummaryDTO.builder()
+                .subtotal(subtotal)
+                .discount(discount)
+                .shippingCost(shippingCost)
+                .total(subtotal.subtract(discount).add(shippingCost))
+                .couponCode(coupon != null ? coupon.getCode() : null)
+                .build();
+    }
+
+    private BigDecimal calculateShipping(BigDecimal subtotal) {
+        return subtotal.compareTo(FREE_SHIPPING_THRESHOLD) >= 0 ? BigDecimal.ZERO : SHIPPING_COST;
+    }
+
+    private BigDecimal calculateDiscount(BigDecimal subtotal, Coupon coupon) {
+        if (coupon.getDiscountType() == Coupon.DiscountType.PERCENTAGE) {
+            return subtotal.multiply(coupon.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        }
+        return coupon.getDiscountValue().min(subtotal);
+    }
+
+    private Coupon resolveCoupon(BigDecimal subtotal, String couponCode) {
+        if (couponCode == null || couponCode.isBlank()) {
+            return null;
+        }
+        Coupon coupon = couponService.getValidCoupon(couponCode.trim().toUpperCase());
+        if (coupon.getMinAmount() != null && subtotal.compareTo(coupon.getMinAmount()) < 0) {
+            throw new IllegalStateException("El cupón requiere una compra mínima de " + coupon.getMinAmount());
+        }
+        return coupon;
     }
 
     public PagedResponse<OrderDTO> getUserOrders(Long userId, int page, int size) {

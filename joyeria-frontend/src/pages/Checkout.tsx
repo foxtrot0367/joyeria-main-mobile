@@ -1,17 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { CreditCard, MapPin, ShoppingBag, Lock, Check } from 'lucide-react'
+import { CreditCard, MapPin, ShoppingBag, Lock, Check, X } from 'lucide-react'
 import { useCart } from '../contexts/CartContext'
 import { useToast } from '../contexts/ToastContext'
 import { orderService } from '../services/order.service'
 import { paymentService } from '../services/misc.service'
-import { couponService } from '../services/coupon.service'
+import { cartService } from '../services/cart.service'
 import Button from '../components/Button'
 import { formatPrice } from '../utils/format'
 import { getErrorMessage } from '../utils/errors'
 import { calculateShipping } from '../utils/shipping'
-import type { Coupon } from '../types'
+import type { CheckoutSummary } from '../types'
 
 export default function Checkout() {
   const { cart } = useCart()
@@ -20,10 +20,22 @@ export default function Checkout() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [coupon, setCoupon] = useState('')
-  const [couponApplied, setCouponApplied] = useState<Coupon | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null)
+  const [summary, setSummary] = useState<CheckoutSummary | null>(null)
   const [shipping, setShipping] = useState<{ address: string; city: string; department: string; recipient: string; phone: string }>({ address: '', city: '', department: '', recipient: '', phone: '' })
   const [payment, setPayment] = useState<{ method: string }>({ method: 'card' })
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const cartSubtotal = cart?.subtotal || 0
+
+  useEffect(() => {
+    if (!cart || cart.items.length === 0) { setSummary(null); return }
+    let active = true
+    cartService.getSummary(appliedCoupon || undefined)
+      .then(s => { if (active) setSummary(s) })
+      .catch(() => { if (active) setSummary(null) })
+    return () => { active = false }
+  }, [cart, appliedCoupon])
 
   const validateShipping = (): boolean => {
     const errors: Record<string, string> = {}
@@ -45,11 +57,21 @@ export default function Checkout() {
   }
 
   const applyCoupon = async () => {
+    const code = coupon.trim()
+    if (!code) return
     try {
-      const c = await couponService.validate(coupon)
-      setCouponApplied(c)
+      const s = await cartService.getSummary(code)
+      setSummary(s)
+      setAppliedCoupon(s.couponCode)
       toast('¡Cupón aplicado!')
-    } catch { toast('Cupón inválido', 'error') }
+    } catch (err) {
+      toast(getErrorMessage(err, 'Cupón inválido'), 'error')
+    }
+  }
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null)
+    setCoupon('')
   }
 
   const handlePay = async () => {
@@ -64,7 +86,7 @@ export default function Checkout() {
         shippingAddress: shipping.address, shippingCity: shipping.city,
         shippingDepartment: shipping.department, recipientName: shipping.recipient,
         phone: shipping.phone, paymentMethod: payment.method === 'card' ? 'card' : 'pse',
-        couponCode: couponApplied?.code || undefined, notes: ''
+        couponCode: appliedCoupon || undefined, notes: ''
       })
 
       await paymentService.processPayment({ orderId: order.id, paymentMethod: payment.method })
@@ -74,14 +96,11 @@ export default function Checkout() {
     } finally { setLoading(false) }
   }
 
-  const shippingCost = calculateShipping(cart?.subtotal || 0)
-  let discount = 0
-  if (couponApplied) {
-    discount = couponApplied.discountType === 'PERCENTAGE'
-      ? ((cart?.subtotal || 0) * couponApplied.discountValue) / 100
-      : Math.min(couponApplied.discountValue, cart?.subtotal || 0)
-  }
-  const total = (cart?.subtotal || 0) - discount + shippingCost
+  const subtotal = summary?.subtotal ?? cartSubtotal
+  const discount = summary?.discount ?? 0
+  const shippingCost = summary?.shippingCost ?? calculateShipping(cartSubtotal)
+  const total = summary?.total ?? subtotal - discount + shippingCost
+
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -200,15 +219,23 @@ export default function Checkout() {
               ))}
             </div>
             <div className="border-t border-line/70 pt-3 mb-4">
-              <div className="flex gap-2 mb-3">
-                <input value={coupon} onChange={e => setCoupon(e.target.value)} placeholder="Código de cupón"
-                  className="flex-1 px-3 py-2 border border-line rounded-lg text-xs outline-none focus:border-[#C9A227]" />
-                <button onClick={applyCoupon} className="text-xs text-[#C9A227] font-medium">Aplicar</button>
-              </div>
-              {couponApplied && <p className="text-xs text-accent-green mb-3">Cupón {couponApplied.code} aplicado (-{formatPrice(discount)})</p>}
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between text-xs mb-3">
+                  <span className="text-accent-green">Cupón {appliedCoupon} aplicado</span>
+                  <button onClick={removeCoupon} className="flex items-center gap-1 text-foreground-faint hover:text-red-500">
+                    <X size={12} /> Quitar
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 mb-3">
+                  <input value={coupon} onChange={e => setCoupon(e.target.value)} placeholder="Código de cupón"
+                    className="flex-1 px-3 py-2 border border-line rounded-lg text-xs outline-none focus:border-[#C9A227]" />
+                  <button onClick={applyCoupon} className="text-xs text-[#C9A227] font-medium">Aplicar</button>
+                </div>
+              )}
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-foreground-faint">Subtotal</span><span>{formatPrice(cart.subtotal)}</span></div>
+              <div className="flex justify-between"><span className="text-foreground-faint">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
               {discount > 0 && <div className="flex justify-between"><span className="text-foreground-faint">Descuento</span><span className="text-accent-green">-{formatPrice(discount)}</span></div>}
               <div className="flex justify-between"><span className="text-foreground-faint">Envío</span><span>{shippingCost === 0 ? <span className="text-accent-green">Gratis</span> : formatPrice(shippingCost)}</span></div>
               <div className="border-t border-line/70 pt-2 flex justify-between font-semibold text-foreground">

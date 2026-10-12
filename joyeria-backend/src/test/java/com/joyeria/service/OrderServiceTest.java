@@ -1,5 +1,6 @@
 package com.joyeria.service;
 
+import com.joyeria.dto.CheckoutSummaryDTO;
 import com.joyeria.dto.OrderCreateRequest;
 import com.joyeria.dto.OrderDTO;
 import com.joyeria.exception.ResourceNotFoundException;
@@ -194,5 +195,49 @@ class OrderServiceTest {
         request.setCouponCode("BIG");
 
         assertThrows(IllegalStateException.class, () -> orderService.createOrder(1L, request));
+    }
+
+    @Test
+    void summarizeCart_ComputesTotalsFromBackendPrices() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+
+        CheckoutSummaryDTO summary = orderService.summarizeCart(1L, null);
+
+        assertEquals(0, new BigDecimal("200000").compareTo(summary.getSubtotal()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(summary.getDiscount()));
+        assertEquals(0, new BigDecimal("15000").compareTo(summary.getShippingCost()));
+        assertEquals(0, new BigDecimal("215000").compareTo(summary.getTotal()));
+        assertNull(summary.getCouponCode());
+    }
+
+    @Test
+    void summarizeCart_WithCoupon_AppliesDiscountWithoutConsumingUses() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+
+        Coupon coupon = new Coupon();
+        coupon.setCode("SAVE10");
+        coupon.setDiscountType(Coupon.DiscountType.PERCENTAGE);
+        coupon.setDiscountValue(new BigDecimal("10"));
+        coupon.setUsesCount(0);
+        when(couponService.getValidCoupon("SAVE10")).thenReturn(coupon);
+
+        CheckoutSummaryDTO summary = orderService.summarizeCart(1L, "save10");
+
+        assertEquals(0, new BigDecimal("20000").compareTo(summary.getDiscount()));
+        assertEquals(0, new BigDecimal("195000").compareTo(summary.getTotal()));
+        assertEquals("SAVE10", summary.getCouponCode());
+        assertEquals(0, coupon.getUsesCount());
+    }
+
+    @Test
+    void summarizeCart_WithFreeShippingThreshold_NoShippingCost() {
+        testProduct.setPrice(new BigDecimal("600000"));
+        testCartItem.setQuantity(1);
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+
+        CheckoutSummaryDTO summary = orderService.summarizeCart(1L, null);
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(summary.getShippingCost()));
+        assertEquals(0, new BigDecimal("600000").compareTo(summary.getTotal()));
     }
 }

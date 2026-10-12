@@ -1,9 +1,16 @@
 import api from './api'
-import type { ApiResponse, Cart } from '../types'
+import type { ApiResponse, Cart, CheckoutSummary } from '../types'
 
 export const cartService = {
   async getCart(): Promise<Cart> {
     const { data } = await api.get<ApiResponse<Cart>>('/cart')
+    return data.data
+  },
+
+  async getSummary(coupon?: string): Promise<CheckoutSummary> {
+    const { data } = await api.get<ApiResponse<CheckoutSummary>>('/cart/summary', {
+      params: coupon ? { coupon } : {},
+    })
     return data.data
   },
 
