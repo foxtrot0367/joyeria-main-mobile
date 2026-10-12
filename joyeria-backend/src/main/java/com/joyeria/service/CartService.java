@@ -121,7 +121,7 @@ public class CartService {
     }
 
     private CartDTO mapToDTO(Cart cart) {
-        List<CartItemDTO> items = cart.getItems().stream()
+        List<CartItemDTO> items = cartItemRepository.findByCartId(cart.getId()).stream()
                 .map(item -> CartItemDTO.builder()
                         .id(item.getId())
                         .productId(item.getProduct().getId())
