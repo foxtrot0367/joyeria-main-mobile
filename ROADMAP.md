@@ -119,22 +119,25 @@
 
 ---
 
-## FASE 4 — E-commerce
+## FASE 4 — E-commerce ✅ (completada 2026-10-11)
 
 **Objetivo:** catálogo, carrito, checkout y pedidos sólidos.
 
 **Tareas:**
-1. Catálogo: topes de `page/size`, `sort` whitelist, índices/búsqueda eficiente (B-M3), paginación real verificada, filtros combinados.
-2. Carrito: validar stock acumulado (B3), deshabilitar "−" en cantidad 1, respetar `loading`, manejar errores de acciones (F-M1, B-B3).
-3. Checkout: forms con validación real, bloquear saltos de paso, validación antes de crear pedido, resumen con totales calculados por backend (C7).
-4. Cupones: invocar `validateCouponForOrder` con fechas/límites/monto mínimo en `createOrder` (B-A7).
-5. Stock: `@Version` o bloqueo pessimista (B-A6).
-6. Pedidos: estados + timeline visual en frontend; corregir métricas de dashboard (B-M11) — el dashboard visual completo es Fase 6.
-7. Favoritos: mover al carrito, detectar stock (F-M9 parcial).
-8. Email transaccional real (o deshabilitar el flujo con mensajes honestos): reset (B-A4), confirmación de pedido (Fase 4/5).
-9. Precios: backend como única fuente de verdad — recalcular totales en `createOrder` (verificar que ya lo hace y que checkout no envía totales).
+1. ✅ Catálogo: topes de `page/size` (`MAX_PAGE_SIZE=50`) y `sort` whitelist (400 fuera de lista) en `ProductService.buildPageable`; `ProductRepository.findFiltered` null-safe; migración `V11` con `pg_trgm` + índices GIN trigram (B-M3).
+2. ✅ Carrito: stock acumulado y cantidad ≥1 validados en `CartService.addItem`; `CartItemDTO.productStock` expuesto; frontend deshabilita "−" en cantidad 1 y "+" en stock máximo, con banner de error y estado busy (B3, F-M1, B-B3).
+3. ✅ Checkout: validación por campo (`validateShipping`), bloqueo de avance de paso y revalidación antes de pagar (C7).
+4. ✅ Cupones: `CouponService.getValidCoupon` (activo, vigencia, `maxUses`) + chequeo de `minAmount` en `OrderService.resolveCoupon`; normalización `trim().toUpperCase()`; `uses_count` incrementado al consumir (B-A7).
+5. ✅ Stock: `ProductRepository.findByIdForUpdate` con bloqueo pessimista (`@Lock(PESSIMISTIC_WRITE)`) en `createOrder`, evita sobreventa lógica (B-A6).
+6. ✅ Pedidos: `OrderTimeline` (PENDING→PAID→PREPARING→SHIPPED→DELIVERED + banner CANCELLED) en confirmación; dashboard cuenta ingresos solo de pagos `COMPLETED` (`sumTotalByPaymentStatus`) (B-M11).
+7. ✅ Favoritos: rating real y selector de cantidad limitado por stock en detalle; mover al carrito desde la lista (F-M9).
+8. ✅ Email transaccional real por SMTP (`spring-boot-starter-mail`) con fallback honesto si no está configurado; `OrderCreatedEvent` (`@TransactionalEventListener AFTER_COMMIT`) y reset de contraseña; confirmación de pedido sin prometer correo (B-A4).
+9. ✅ Precios: backend como única fuente de verdad vía `GET /api/cart/summary` (`CheckoutSummaryDTO`); el checkout consume totales del backend y ya no los calcula (F4.9).
+- ✅ Extra: corregido `CartService` devolvía el carrito sin el ítem recién agregado en carrito nuevo (colección inversa `mappedBy` desactualizada); ahora `mapToDTO` consulta `CartItemRepository.findByCartId` (commit `f3f9061`).
 
-**Criterio de salida:** flujo invitado→registro→catálogo→carrito→checkout→pedido funciona extremo a extremo con BD local; sin `quantity: 0`; cupones validados; sin sobreventa lógica.
+**Tests (59 en verde):** AuthService (8), RefreshTokenService (7), RateLimitFilter (6), SupportService (5), CouponService (4), OrderService (13), ReviewService (3), ProductService (7), CartService (3), EmailService (5). Frontend: `npm run lint` (0 errores, 9 warnings preexistentes) y `npm run build` OK.
+
+**Criterio de salida:** ✅ smoke en vivo contra BD local: registro → catálogo (paginación/sort y validaciones 400) → carrito (stock acumulado, sobre-stock 400) → `/cart/summary` → pedido (totales backend, stock 17→15 y `soldCount` +2) → cupón (10% aplicado, `minAmount`/expirado 400, `uses_count` +1) → logout. Sin `quantity: 0`; sin sobreventa lógica.
 
 ---
 
