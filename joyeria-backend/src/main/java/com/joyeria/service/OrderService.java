@@ -59,7 +59,7 @@ public class OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (CartItem cartItem : cart.getItems()) {
-            Product product = productRepository.findById(cartItem.getProduct().getId())
+            Product product = productRepository.findByIdForUpdate(cartItem.getProduct().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
             
             if (product.getStock() < cartItem.getQuantity()) {
