@@ -157,10 +157,10 @@ export default function ProductDetail() {
                 <span className="text-sm text-foreground-faint">Cantidad</span>
                 <div className="flex items-center border border-line rounded-lg">
                   <button onClick={() => setQuantity(q => Math.max(1, q - 1))} disabled={quantity <= 1} aria-label="Disminuir cantidad"
-                    className="p-2 text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed"><Minus size={14} /></button>
+                    className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed"><Minus size={14} /></button>
                   <span className="w-10 text-center text-sm">{quantity}</span>
                   <button onClick={() => setQuantity(q => Math.min(product.stock, q + 1))} disabled={quantity >= product.stock} aria-label="Aumentar cantidad"
-                    className="p-2 text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed"><Plus size={14} /></button>
+                    className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed"><Plus size={14} /></button>
                 </div>
               </div>
             )}

@@ -69,7 +69,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden text-foreground" aria-label="Abrir menú">
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden -ml-2 p-3 text-foreground" aria-label="Abrir menú">
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
 
@@ -151,11 +151,11 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <ThemeToggle className="hidden lg:flex" />
             {isAuthenticated && (
-              <Link to="/cuenta/favoritos" className="relative p-2 text-foreground-muted hover:text-[#C9A227] transition-colors" aria-label="Favoritos">
+              <Link to="/cuenta/favoritos" className="relative p-3 text-foreground-muted hover:text-[#C9A227] transition-colors" aria-label="Favoritos">
                 <Heart size={20} />
               </Link>
             )}
-            <Link to="/carrito" className="relative p-2 text-foreground-muted hover:text-[#C9A227] transition-colors" aria-label="Carrito">
+            <Link to="/carrito" className="relative p-3 text-foreground-muted hover:text-[#C9A227] transition-colors" aria-label="Carrito">
               <ShoppingCart size={20} />
               {itemCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-[#C9A227] text-white text-[10px] min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center font-bold">

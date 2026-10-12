@@ -62,7 +62,7 @@ export default function CartPage() {
                       <h3 className="font-medium text-foreground hover:text-[#C9A227] transition-colors">{item.productName}</h3>
                       <p className="text-sm text-foreground-faint mt-1">{formatPrice(item.productPrice)} c/u</p>
                     </Link>
-                    <button onClick={() => removeItem(item.id)} disabled={busy} aria-label={`Eliminar ${item.productName}`} className="text-foreground/20 hover:text-red-500 transition-colors h-fit disabled:opacity-40 disabled:cursor-not-allowed">
+                    <button onClick={() => removeItem(item.id)} disabled={busy} aria-label={`Eliminar ${item.productName}`} className="min-w-11 min-h-11 flex items-center justify-center shrink-0 text-foreground/20 hover:text-red-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -72,7 +72,7 @@ export default function CartPage() {
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         disabled={busy || item.quantity <= 1}
                         aria-label="Disminuir cantidad"
-                        className="p-2 text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed">
+                        className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed">
                         <Minus size={14} />
                       </button>
                       <span className="w-10 text-center text-sm">{item.quantity}</span>
@@ -81,7 +81,7 @@ export default function CartPage() {
                         disabled={busy || atMaxStock}
                         aria-label="Aumentar cantidad"
                         title={atMaxStock ? 'No hay más stock disponible' : undefined}
-                        className="p-2 text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed">
+                        className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-[#C9A227] disabled:opacity-30 disabled:cursor-not-allowed">
                         <Plus size={14} />
                       </button>
                     </div>

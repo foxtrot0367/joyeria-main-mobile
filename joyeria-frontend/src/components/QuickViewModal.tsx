@@ -63,7 +63,7 @@ export default function QuickViewModal({ product, onClose, onAddToCart }: Props)
           transition={{ duration: 0.25 }}
           className="relative bg-surface rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto">
           <button onClick={onClose} aria-label="Cerrar"
-            className="absolute top-3.5 right-3.5 z-10 w-9 h-9 rounded-full bg-surface/90 shadow-sm flex items-center justify-center text-foreground-faint hover:text-foreground transition-colors">
+            className="absolute top-3.5 right-3.5 z-10 w-11 h-11 rounded-full bg-surface/90 shadow-sm flex items-center justify-center text-foreground-faint hover:text-foreground transition-colors">
             <X size={18} />
           </button>
 
@@ -123,9 +123,9 @@ export default function QuickViewModal({ product, onClose, onAddToCart }: Props)
                 {!outOfStock && (
                   <div className="flex items-center gap-3">
                     <div className="flex items-center border border-line rounded-lg">
-                      <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-2 text-foreground-faint hover:text-foreground">−</button>
+                      <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Disminuir cantidad" className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-foreground">−</button>
                       <span className="w-8 text-center text-sm font-medium">{qty}</span>
-                      <button onClick={() => setQty(Math.min(product.stock, qty + 1))} className="px-3 py-2 text-foreground-faint hover:text-foreground">+</button>
+                      <button onClick={() => setQty(Math.min(product.stock, qty + 1))} aria-label="Aumentar cantidad" className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-foreground">+</button>
                     </div>
                     <button
                       onClick={() => { onAddToCart?.(product.id, qty); onClose() }}

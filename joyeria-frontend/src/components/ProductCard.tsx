@@ -40,8 +40,8 @@ export default function ProductCard({ product, onAddToCart, onQuickView, onToggl
 
         {/* Quick view */}
         {onQuickView && (
-          <button onClick={() => onQuickView(product)}
-            className="absolute inset-x-3 bottom-3 bg-surface/90 backdrop-blur-sm text-foreground text-xs font-medium py-2.5 rounded-lg shadow-sm opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-1.5">
+          <button onClick={() => onQuickView(product)} aria-label={`Vista rápida de ${product.name}`}
+            className="absolute inset-x-3 bottom-3 bg-surface/90 backdrop-blur-sm text-foreground text-xs font-medium py-3 min-h-[44px] rounded-lg shadow-sm opacity-100 translate-y-0 lg:opacity-0 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-y-0 transition-all duration-300 flex items-center justify-center gap-1.5">
             <Eye size={14} /> Vista rápida
           </button>
         )}
@@ -68,7 +68,7 @@ export default function ProductCard({ product, onAddToCart, onQuickView, onToggl
           <motion.button
             whileTap={reduced ? undefined : { scale: 0.85 }}
             onClick={(e) => { e.preventDefault(); onToggleFavorite(product.id) }}
-            className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors ${
+            className={`absolute top-3 right-3 w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors ${
               isFavorite ? 'bg-red-50 text-red-500 border border-red-200' : 'bg-surface/90 text-foreground-faint hover:text-red-500'}`}
             aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
             <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />

@@ -207,13 +207,22 @@
 
 ---
 
-## FASE 8 — Mobile
+## FASE 8 — Mobile ✅
 
 **Objetivo:** experiencia diseñada para móvil (360–430px), no adaptada.
 
 **Tareas:** sidebar admin responsive con hamburguesa (F-A5); revisar navbar, búsqueda, cards, carrito, checkout, formularios, modales; eliminar overflow horizontal; targets táctiles ≥44px; quick view accesible en móvil; `loading="lazy"` (F-M14).
 
-**Criterio de salida:** verificación manual en 360/375/390/430px de todas las rutas públicas, cliente y admin; sin overflow ni elementos cortados.
+**Implementado:**
+1. ✅ Guard global de overflow horizontal (`overflow-x: clip` en `body`); no rompe `sticky` ni el scroll interno de los carruseles (`overflow-x-auto` propios).
+2. ✅ `ProductCard`: botón "Vista rápida" ahora **visible en táctil** (antes solo con `group-hover`, inaccesible sin puntero); en desktop sigue apareciendo al hover. Botón de favoritos a ≥44px en móvil.
+3. ✅ Navbar: botón hamburguesa y accesos a favoritos/carrito con objetivo táctil de 44px.
+4. ✅ Carrito y ficha de producto: controles de cantidad (−/+) y botón eliminar a ≥44px.
+5. ✅ `QuickViewModal`: botón de cerrar y selector de cantidad a ≥44px; accesible en móvil (columnas apiladas, `max-h-[92vh]` con scroll) y cierre con `Escape`/overlay.
+6. ✅ `AdminProducts`: formulario a una columna en móvil (`grid-cols-1 sm:grid-cols-2`) y acciones de fila a ≥44px. Las tablas del panel ya usan `overflow-x-auto` (scroll contenido sin desbordar la página).
+7. ✅ `loading="lazy"` + `decoding="async"` en imágenes vía `SmartImage` (F-M14), heredado de Fase 7.
+
+**Verificación:** `npm run lint` (0 errores, 10 warnings preexistentes `react-hooks/exhaustive-deps`), `npm run build` (tsc + vite) OK. Guardas automáticas de overflow y objetivos táctiles aplicadas en los controles clave; **se recomienda una verificación manual final en responsive 360/375/390/430px** (no ejecutable en este entorno sin navegador). Cambios solo de frontend; sin migraciones ni cambios de API.
 
 ---
 

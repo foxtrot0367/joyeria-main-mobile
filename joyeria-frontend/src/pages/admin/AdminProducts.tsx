@@ -185,8 +185,8 @@ export default function AdminProducts() {
                     </td>
                     <td className="p-4">
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => openEdit(p)} className="p-2 text-foreground-faint hover:text-[#C9A227]"><Pencil size={15} /></button>
-                        <button onClick={() => remove(p.id)} className="p-2 text-foreground-faint hover:text-red-500"><Trash2 size={15} /></button>
+                        <button onClick={() => openEdit(p)} aria-label={`Editar ${p.name}`} className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-[#C9A227]"><Pencil size={15} /></button>
+                        <button onClick={() => remove(p.id)} aria-label={`Eliminar ${p.name}`} className="min-w-11 min-h-11 flex items-center justify-center text-foreground-faint hover:text-red-500"><Trash2 size={15} /></button>
                       </div>
                     </td>
                   </tr>
@@ -200,7 +200,7 @@ export default function AdminProducts() {
 
       <Modal isOpen={modal} onClose={() => setModal(false)} title={editing ? 'Editar producto' : 'Nuevo producto'} maxWidth="max-w-3xl">
         <form onSubmit={save} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className={label}>Nombre *</label>
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required className={input} />
