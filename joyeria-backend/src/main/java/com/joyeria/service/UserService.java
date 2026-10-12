@@ -66,13 +66,22 @@ public class UserService {
     public UserDTO updateUserRole(Long id, String role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-        user.setRole(UserRole.valueOf(role));
+        UserRole newRole = UserRole.valueOf(role);
+        if (user.getRole() == UserRole.ADMIN && newRole != UserRole.ADMIN
+                && user.getActive() && userRepository.countByRoleAndActiveTrue(UserRole.ADMIN) <= 1) {
+            throw new IllegalStateException("No se puede quitar el rol de administrador al último administrador activo");
+        }
+        user.setRole(newRole);
         return mapToDTO(userRepository.save(user));
     }
 
     public UserDTO toggleUserActive(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        if (user.getActive() && user.getRole() == UserRole.ADMIN
+                && userRepository.countByRoleAndActiveTrue(UserRole.ADMIN) <= 1) {
+            throw new IllegalStateException("No se puede desactivar al último administrador activo");
+        }
         user.setActive(!user.getActive());
         return mapToDTO(userRepository.save(user));
     }
