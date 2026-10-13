@@ -255,6 +255,22 @@ export interface AuthResponse {
   role: string
 }
 
+export interface AiProductSuggestion {
+  id: number
+  name: string
+  slug?: string
+  price: number
+  image?: string | null
+  material?: string | null
+  available: boolean
+  reason?: string
+}
+
+export interface AiAssistantResponse {
+  message: string
+  products: AiProductSuggestion[]
+}
+
 export interface DashboardStats {
   totalOrders: number
   totalRevenue: number
