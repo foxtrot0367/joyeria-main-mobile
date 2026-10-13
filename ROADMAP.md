@@ -243,13 +243,22 @@
 
 ---
 
-## FASE 10 — Testing
+## FASE 10 — Testing ✅
 
 **Objetivo:** cobertura de comportamiento crítico.
 
 **Tareas:** backend — tests de `OrderService` (camino feliz), `PaymentService`, validación de cupones, controllers MockMvc, seguridad (ownership/roles); migraciones con Testcontainers o H2+Flyway; JaCoCo. Frontend — instalar Vitest, tests de `authService`/`CartContext`/componentes clave. E2E mínimo (Playwright): registro→login→producto→carrito→checkout→pedido.
 
-**Criterio de salida:** `mvn test` con cobertura de los flujos críticos; al menos un E2E del camino feliz.
+**Implementado:**
+1. ✅ Backend — JaCoCo `0.8.15` en `pom.xml` (`prepare-agent` + `report` en fase `test`, compatible con JDK 25). Reporte en `target/site/jacoco/`.
+2. ✅ Backend — 4 nuevas clases de test MockMvc standalone (`MockMvcBuilders.standaloneSetup(...).setControllerAdvice(new GlobalExceptionHandler())`) en `com.joyeria.controller`: `OrderControllerTest` (7, incl. ownership y rol admin), `AuthControllerTest` (5), `ProductControllerTest` (6), `PaymentControllerTest` (6) = **24 tests nuevos**.
+3. ✅ Frontend — Vitest `3.2.7` + `@vitest/coverage-v8` + `jsdom` + Testing Library (`react`, `jest-dom`, `user-event`). Config en `vitest.config.ts` (jsdom, `setupFiles`, exclusión de `e2e/**`) y `src/test/setup.ts` (limpieza tras cada test + polyfills de `matchMedia`/`IntersectionObserver`/`ResizeObserver` para framer-motion). Scripts `test` y `test:coverage`.
+4. ✅ Frontend — 4 archivos de test (**20 tests**): `src/utils/errors.test.ts` (5), `src/services/auth.service.test.ts` (5), `src/contexts/CartContext.test.tsx` (5), `src/components/ProductCard.test.tsx` (5).
+5. ✅ E2E Playwright `@playwright/test` (`e2e/purchase-flow.spec.ts`, `playwright.config.ts`, script `test:e2e`): camino feliz registro → catálogo → carrito → checkout (envío) → pago → pasarela sandbox → `/pedido-confirmado`. Precarga el consentimiento de cookies vía `addInitScript`.
+
+**Verificación:** `mvn test` **119/119** ✅ (cobertura actual: instrucciones **39.2 %**, ramas **38.6 %**; no se fija umbral mínimo para no romper la build). `npm test` **20/20** ✅. `npm run test:e2e` **1/1** ✅ (contra dev server 5173 + backend 8080). `npm run lint` (0 errores, 10 warnings preexistentes), `npm run build` OK.
+
+**Criterio de salida:** `mvn test` con cobertura de los flujos críticos ✅; al menos un E2E del camino feliz ✅.
 
 ---
 

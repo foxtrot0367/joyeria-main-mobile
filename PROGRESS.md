@@ -25,7 +25,7 @@ $env:JWT_SECRET = [Convert]::ToBase64String([byte[]](1..48 | ForEach-Object { Ge
 $env:SPRING_PROFILES_ACTIVE = 'dev'
 mvn -o spring-boot:run
 ```
-- Tests: `mvn -o test` (95/95).
+- Tests: `mvn -o test` (**119/119**). Cobertura JaCoCo en `target/site/jacoco/` (instrucciones ≈39 %, ramas ≈39 %; sin umbral mínimo).
 - API en `http://localhost:8080`. Uploads en `/uploads`.
 
 ### Frontend (`joyeria-frontend`)
@@ -33,6 +33,9 @@ mvn -o spring-boot:run
 npm run dev      # http://localhost:5173  (proxy /api y /uploads -> :8080)
 npm run lint     # baseline: 0 errores, 10 warnings
 npm run build    # tsc -b && vite build
+npm test         # vitest run  (20/20)
+npm run test:coverage   # vitest + cobertura v8
+npm run test:e2e        # Playwright (requiere dev server + backend arriba)
 ```
 Credenciales seed (perfil `dev`): `admin@joyeria.com` / `admin123` (ADMIN, id=1), `maria@example.com` / `user1234` (USER).
 
@@ -52,11 +55,11 @@ Credenciales seed (perfil `dev`): `admin@joyeria.com` / `admin123` (ADMIN, id=1)
 | F7 | UI/UX | ✅ commit `5fca33d` |
 | F8 | Mobile | ✅ commit `3056e82` |
 | F9 | Performance | ✅ commit `6615fe8` |
-| F10 | Testing | ⏳ pendiente (siguiente) |
+| F10 | Testing | ✅ (backend 119, frontend 20, E2E 1) |
 | F11 | CI/CD | ⏳ pendiente |
 | F12 | Cierre | ⏳ pendiente |
 
-HEAD local: `6615fe8`. Rama `main` (ahead/behind respecto a `origin/main`).
+HEAD local: `cb591fb` (F9 docs) + commit de F10 (testing).
 Contadores: 88 endpoints (`TOTAL_MAPPINGS=88`, 21 controllers).
 
 ---
@@ -92,7 +95,33 @@ Frontend:
 
 ### Pendiente
 1. Confirmar la prueba de favoritos con imágenes (chequeo de script, no del server).
-2. Notificar al usuario y **pedir autorización para FASE 10 — Testing**.
+
+---
+
+## FASE 10 — Testing ✅
+
+### Backend
+- `pom.xml`: plugin **JaCoCo `0.8.15`** (`prepare-agent` + `report` en fase `test`; compatible con JDK 25). Reporte en `joyeria-backend/target/site/jacoco/`.
+- 4 clases de test **MockMvc standalone** en `com.joyeria.controller` (sin contexto Spring; `MockMvcBuilders.standaloneSetup(...).setControllerAdvice(new GlobalExceptionHandler())`): `OrderControllerTest` (7, incl. ownership y rol admin), `AuthControllerTest` (5), `ProductControllerTest` (6), `PaymentControllerTest` (6) → **24 tests nuevos**.
+- Total backend: **119/119** ✅. Cobertura: instrucciones **39.2 %**, ramas **38.6 %** (no se fija umbral mínimo para no romper la build).
+
+### Frontend
+- Deps: `vitest@3.2.7` (Vitest 5 exige Vite 6; el proyecto usa Vite 5.4), `@vitest/coverage-v8`, `jsdom`, `@testing-library/react|jest-dom|user-event`.
+- `vitest.config.ts` (NUEVO): entorno jsdom, `setupFiles: ./src/test/setup.ts`, `exclude` incluye `e2e/**` (para que el spec de Playwright no lo recoja Vitest), cobertura v8.
+- `src/test/setup.ts` (NUEVO): `@testing-library/jest-dom/vitest`, `afterEach(cleanup)` (no se usa `globals`), polyfills `matchMedia`/`IntersectionObserver`/`ResizeObserver` (framer-motion).
+- 4 archivos de test (**20/20**): `src/utils/errors.test.ts` (5), `src/services/auth.service.test.ts` (5), `src/contexts/CartContext.test.tsx` (5), `src/components/ProductCard.test.tsx` (5).
+- Scripts en `package.json`: `test`, `test:coverage`, `test:e2e`.
+
+### E2E (Playwright)
+- `@playwright/test` + Chromium instalado. `playwright.config.ts` (NUEVO) con `baseURL http://localhost:5173` (no gestiona webServer; requiere dev+backend vivos).
+- `e2e/purchase-flow.spec.ts` (NUEVO): camino feliz registro → catálogo → carrito → checkout (envío) → pago → pasarela sandbox → `/pedido-confirmado`. `context.addInitScript` precarga el consentimiento de cookies.
+- `.gitignore`: añadidos `playwright-report/`, `test-results/`, `blob-report/`, `playwright/.cache/`. `eslint.config.js`: `ignores` incluye esos dirs + `coverage`.
+
+### Verificación
+- `mvn test` **119/119** ✅ · `npm test` **20/20** ✅ · `npm run test:e2e` **1/1** ✅ · `npm run lint` 0 errores / 10 warnings · `npm run build` OK.
+
+### Pendiente
+1. Notificar al usuario y **pedir autorización para FASE 11 — CI/CD**.
 
 ---
 
