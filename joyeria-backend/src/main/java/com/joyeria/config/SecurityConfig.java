@@ -76,6 +76,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/newsletter/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/ai/assistant").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/gift-finder/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/social-links").permitAll()
                 .requestMatchers("/api/payments/webhook", "/api/payments/webhook/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()

@@ -31,7 +31,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
             "POST|/api/auth/reset-password", new Rule(5, 3600),
             "POST|/api/coupons/validate", new Rule(20, 60),
             "POST|/api/orders", new Rule(10, 60),
-            "POST|/api/ai/assistant", new Rule(20, 60)
+            "POST|/api/ai/assistant", new Rule(20, 60),
+            "POST|/api/gift-finder/recommend", new Rule(20, 60)
     );
 
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
