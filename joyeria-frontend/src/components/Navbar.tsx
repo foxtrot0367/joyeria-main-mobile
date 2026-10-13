@@ -135,10 +135,12 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
 
-              {navLinks.map(l => (
-                <Link key={l.label} to={l.to}
-                  className="text-sm font-medium text-foreground-muted hover:text-[#C9A227] transition-colors">{l.label}</Link>
-              ))}
+            {navLinks.map(l => (
+              <Link key={l.label} to={l.to}
+                className="text-sm font-medium text-foreground-muted hover:text-[#C9A227] transition-colors">{l.label}</Link>
+            ))}
+            <Link to="/gift-finder"
+              className="text-sm font-medium text-[#C9A227] hover:opacity-80 transition-opacity">Encuentra el regalo</Link>
             </nav>
           </div>
 
@@ -217,6 +219,7 @@ export default function Navbar() {
                 className="block py-3 text-sm font-medium text-foreground-muted border-b border-line/40">{label}</Link>
             ))}
             <Link to="/personaliza" onClick={closeAll} className="block py-3 text-sm font-medium text-[#C9A227] border-b border-line/40">Personaliza tu joya</Link>
+            <Link to="/gift-finder" onClick={closeAll} className="block py-3 text-sm font-medium text-[#C9A227] border-b border-line/40">Encuentra el regalo</Link>
             <button onClick={() => { setShopAccordion(false); setMobileOpen(false); navigate('/productos') }}
               className="block py-3 text-sm font-medium text-foreground-muted border-b border-line/40 text-left w-full">Productos</button>
             <Link to="/soporte" onClick={closeAll} className="block py-3 text-sm font-medium text-foreground-muted border-b border-line/40">Soporte</Link>

@@ -271,6 +271,33 @@ export interface AiAssistantResponse {
   products: AiProductSuggestion[]
 }
 
+export interface GiftFinderRequest {
+  recipient?: string
+  occasion?: string
+  style?: string
+  material?: string
+  budgetMin?: number
+  budgetMax?: number
+}
+
+export interface GiftRecommendation {
+  id: number
+  name: string
+  slug: string
+  price: number
+  image?: string | null
+  material?: string | null
+  materialNames?: string[]
+  categoryName?: string
+  available: boolean
+  relevance?: number | null
+  explanation?: string
+}
+
+export interface GiftFinderResponse {
+  recommendations: GiftRecommendation[]
+}
+
 export interface DashboardStats {
   totalOrders: number
   totalRevenue: number

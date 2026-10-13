@@ -28,6 +28,7 @@ function SessionWatcher() {
 const Home = lazy(() => import('./pages/Home'))
 const Catalog = lazy(() => import('./pages/Catalog'))
 const Personalize = lazy(() => import('./pages/Personalize'))
+const GiftFinder = lazy(() => import('./pages/GiftFinder'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
@@ -68,6 +69,7 @@ export default function App() {
           <Route index element={<Suspense fallback={<Loader />}><Home /></Suspense>} />
           <Route path="productos" element={<Suspense fallback={<Loader />}><Catalog /></Suspense>} />
           <Route path="personaliza" element={<Suspense fallback={<Loader />}><Personalize /></Suspense>} />
+          <Route path="gift-finder" element={<Suspense fallback={<Loader />}><GiftFinder /></Suspense>} />
           <Route path="productos/:slug" element={<Suspense fallback={<Loader />}><ProductDetail /></Suspense>} />
           <Route path="login" element={<Suspense fallback={<Loader />}><Login /></Suspense>} />
           <Route path="registro" element={<Suspense fallback={<Loader />}><Register /></Suspense>} />
