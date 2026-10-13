@@ -348,3 +348,39 @@ inventa datos comerciales.
 
 **Verificación:** `mvn -o test` **144/144** ✅ (25 nuevos, sin regresiones);
 `npm run lint` 0 errores; `npm test` **26/26** ✅; `npm run build` correcto.
+
+---
+
+## Fase IA — Smart Gift Finder
+
+Iniciativa posterior a las 13 fases, sin alterar el stack (Spring Boot + React +
+PostgreSQL) ni introducir dependencias ni migraciones nuevas.
+
+**Principio rector:** el motor de recomendación **solo** ordena y explica; los
+productos, precios, materiales, imágenes y stock provienen siempre de PostgreSQL.
+Nunca inventa datos comerciales ni oculta productos agotados.
+
+**Decisión de diseño (Opción D):** sin cambios de esquema; afinidades de
+ocasión/estilo/destinatario deducidas del texto real ya almacenado.
+
+**Implementado:**
+1. ✅ **Auditoría FASE 0** (`docs/GIFT_FINDER_AUDIT.md`).
+2. ✅ **Backend** — paquete `com.joyeria.gift`: `GiftFinderController`
+   (`POST /api/gift-finder/recommend`, público), `GiftFinderService` (scoring
+   determinista + consulta real + explicaciones) y `dto/**`
+   (`GiftFinderRequest`, `GiftRecommendation`, `GiftFinderResponse`).
+   Reutiliza `TextNormalizer`, `ProductRepository.searchFiltered` y
+   `ProductService.mapProducts`.
+3. ✅ **Integración**: `SecurityConfig` (permitAll), `RateLimitFilter` (20/60 s
+   por IP).
+4. ✅ **Frontend**: `services/gift.service.ts`, `pages/GiftFinder.tsx`
+   (asistente de 5 pasos, URL compartible, resultados reales + agregar al
+   carrito), ruta en `App.tsx` y enlace en `Navbar.tsx`; tipos en
+   `types/index.ts`.
+5. ✅ **Motor determinista**: presupuesto siempre respetado; disponibilidad
+   siempre evaluada; relevancia orientativa (nullable sin criterios).
+6. ✅ **Documentación**: `docs/GIFT_FINDER.md`.
+
+**Verificación:** `mvn -o test` **159/159** ✅ (15 nuevos, sin regresiones);
+`npm run lint` 0 errores; `npm test` **35/35** ✅ (9 nuevos); `npm run build`
+correcto.

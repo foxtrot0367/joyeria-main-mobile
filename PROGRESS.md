@@ -155,6 +155,25 @@ Frontend:
 ### Pendiente
 1. Notificar al usuario: **plan de 13 fases (FASE 0–12) completado** — cierre del proyecto.
 
+### Fase IA — Smart Gift Finder ✅
+
+- **FASE 0 (auditoría):** `docs/GIFT_FINDER_AUDIT.md` (decisión **Opción D**, sin
+  cambios de esquema).
+- **Backend:** paquete `com.joyeria.gift` (`GiftFinderController` →
+  `POST /api/gift-finder/recommend` público; `GiftFinderService` con scoring
+  determinista, consulta real y explicaciones; `dto/**`). Reutiliza
+  `TextNormalizer`, `ProductRepository.searchFiltered` y `ProductService.mapProducts`.
+  Integración en `SecurityConfig` (permitAll) y `RateLimitFilter` (20/60 s por IP).
+- **Frontend:** `services/gift.service.ts`, `pages/GiftFinder.tsx` (asistente de 5
+  pasos + "No estoy seguro", URL compartible, resultados reales + agregar al
+  carrito), ruta en `App.tsx`, enlace en `Navbar.tsx`, tipos en `types/index.ts`.
+- **Principio:** el motor solo ordena/explica; los datos comerciales provienen
+  siempre de PostgreSQL. Presupuesto siempre respetado; disponibilidad siempre
+  evaluada; relevancia nullable sin criterios.
+- **Docs:** `docs/GIFT_FINDER.md`.
+- **Verificación:** `mvn -o test` **159/159** ✅ (15 nuevos); `npm run lint` 0
+  errores; `npm test` **35/35** ✅ (9 nuevos); `npm run build` correcto.
+
 ### Fase IA — Asistente de compras (AURA) ✅
 
 - **FASE 0 (auditoría):** `docs/AI_SHOPPING_ASSISTANT_AUDIT.md`.
