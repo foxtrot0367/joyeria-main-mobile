@@ -155,6 +155,24 @@ Frontend:
 ### Pendiente
 1. Notificar al usuario: **plan de 13 fases (FASE 0–12) completado** — cierre del proyecto.
 
+### Fase IA — Asistente de compras (AURA) ✅
+
+- **FASE 0 (auditoría):** `docs/AI_SHOPPING_ASSISTANT_AUDIT.md`.
+- **Backend:** paquete `com.joyeria.ai` (`AiAssistantController` → `POST /api/ai/assistant`
+  público; `AiAssistantService` con fallback; `SearchIntentParser` determinista;
+  `ProductSearchService` sobre PostgreSQL; `ProductRecommendationService` con scoring;
+  `AiPromptService`; `client/**` compatible OpenAI vía `RestClient`; `dto/**`).
+  Integración en `ProductService.mapProducts`, `SecurityConfig` (permitAll),
+  `RateLimitFilter` (20/60 s por IP), `application.yml` (bloque `ai:`) y `.env.example`.
+- **Frontend:** `services/ai.service.ts`, `components/AiAssistantWidget.tsx`
+  (chat + sugerencias reales + agregar al carrito), montado en `MainLayout.tsx`;
+  tipos y `vite-env.d.ts`.
+- **Principio:** la IA solo interpreta intención y redacta; los datos comerciales
+  provienen siempre de PostgreSQL. `AI_ENABLED=false` por defecto (modo determinista).
+- **Docs:** `docs/AI_SHOPPING_ASSISTANT.md`.
+- **Verificación:** `mvn -o test` **144/144** ✅ (25 nuevos); `npm run lint` 0 errores;
+  `npm test` **26/26** ✅; `npm run build` correcto.
+
 ---
 
 ## Bloqueos / notas abiertas

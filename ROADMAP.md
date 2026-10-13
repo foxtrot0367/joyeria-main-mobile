@@ -315,3 +315,36 @@
 - **Fase 1 es bloqueante** para todo lo demás (nada compila hoy).
 - CI/CD (11) solo tiene sentido con builds en verde (Fase 1) — puede adelantarse a continuación de Fase 2 si lo deseas.
 - Testing (10) puede iniciar en paralelo desde Fase 3.
+
+---
+
+## Fase IA — Asistente de compras con IA (AURA)
+
+Iniciativa posterior a las 13 fases, sin alterar el stack (Spring Boot + React +
+PostgreSQL) ni introducir dependencias nuevas.
+
+**Principio rector:** la IA **solo** interpreta la intención y redacta texto; los
+productos, precios, stock y enlaces provienen siempre de PostgreSQL. Nunca
+inventa datos comerciales.
+
+**Implementado:**
+1. ✅ **Auditoría FASE 0** (`docs/AI_SHOPPING_ASSISTANT_AUDIT.md`).
+2. ✅ **Backend** — paquete `com.joyeria.ai`: `AiAssistantController`
+   (`POST /api/ai/assistant`, público), `AiAssistantService` (orquestación +
+   fallback), `SearchIntentParser`/`SearchIntent`/`TextNormalizer` (intención
+   determinista), `ProductSearchService` (consulta real),
+   `ProductRecommendationService` (scoring), `AiPromptService`, `AiProperties`,
+   `AiUnavailableException`, `client/**` (`RestClient` compatible OpenAI +
+   `DisabledAiChatClient`) y `dto/**`.
+3. ✅ **Integración**: `ProductService.mapProducts`, `SecurityConfig` (permitAll),
+   `RateLimitFilter` (20/60 s por IP), bloque `ai:` en `application.yml`,
+   `.env.example` (`AI_*` + `VITE_AI_ASSISTANT_ENABLED`).
+4. ✅ **Frontend**: `services/ai.service.ts`, `components/AiAssistantWidget.tsx`
+   (botón flotante + chat + sugerencias + agregar al carrito), montado en
+   `MainLayout.tsx`; tipos y `vite-env.d.ts` actualizados.
+5. ✅ **Modo por defecto determinista** (`AI_ENABLED=false`), sin proveedor externo
+   y sin claves en el cliente.
+6. ✅ **Documentación**: `docs/AI_SHOPPING_ASSISTANT.md`.
+
+**Verificación:** `mvn -o test` **144/144** ✅ (25 nuevos, sin regresiones);
+`npm run lint` 0 errores; `npm test` **26/26** ✅; `npm run build` correcto.
