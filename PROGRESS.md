@@ -57,9 +57,9 @@ Credenciales seed (perfil `dev`): `admin@joyeria.com` / `admin123` (ADMIN, id=1)
 | F9 | Performance | ✅ commit `6615fe8` |
 | F10 | Testing | ✅ (backend 119, frontend 20, E2E 1) |
 | F11 | CI/CD | ✅ (workflow + branch protection doc) |
-| F12 | Cierre | ⏳ pendiente |
+| F12 | Producción | ✅ (TLS, secrets, backups, actuator, docs) |
 
-HEAD local: `d7666d8` (F10) + commit de F11 (CI/CD).
+HEAD local: `d7666d8` (F10) + `4fc1575` (F11) + commit de F12 (Producción).
 Contadores: 88 endpoints (`TOTAL_MAPPINGS=88`, 21 controllers).
 
 ---
@@ -141,12 +141,28 @@ Frontend:
 
 ---
 
+## FASE 12 — Producción ✅
+
+- **Actuator/health**: `spring-boot-starter-actuator`; solo se expone `health` (+ probes `liveness`/`readiness`, `show-details: never`). `SecurityConfig` permite `/actuator/health/**`. El `MailHealthIndicator` se activa solo con `EMAIL_ENABLED` (`management.health.mail.enabled: ${EMAIL_ENABLED:false}`) para no marcar DOWN cuando el correo es opcional.
+- **Compose**: `docker-compose.yml` prod-safe (solo Caddy publica `80`/`443` con `--profile tls`; PostgreSQL/backend/frontend internos, `restart: unless-stopped`, healthchecks, red dedicada, secretos `${VAR:?}`). **NUEVO** `docker-compose.dev.yml` (publica `5173`/`8080`/`5432`, perfil `dev`) y **NUEVO** `Caddyfile` (TLS automático para `DOMAIN`).
+- **Volumen `uploads`** (`uploads:/app/uploads`); `Dockerfile` backend pre-crea `/app/uploads` con propietario `joyeria` (contenedor no-root). HEALTHCHECK del `Dockerfile` corregido a `/actuator/health`.
+- **Logs**: **NUEVO** `application-prod.yml` (root INFO, Spring/Hibernate WARN, patrón de consola).
+- **Backups**: **NUEVOS** `scripts/backup-db.sh` (pg_dump + retención 30 días) y `scripts/restore-db.sh`.
+- **Secretos (C6)**: `JWT_SECRET` obligatorio sin default; rotación documentada. **README** ampliado (despliegue, operaciones, variables), **LICENSE** MIT, **`.env.example`** con `DOMAIN`/`ACME_EMAIL`/`TRUSTED_PROXIES`/`LOG_LEVEL`, **`.gitattributes`** (LF para scripts).
+- **Decisión Spring Boot 4.x**: documentada en README (se permanece en 3.5.x; migración como iniciativa aparte).
+- **Verificación:** `mvn test` 119/119; arranque real en perfiles `dev` y `prod` → `/actuator/health` 200 `{"status":"UP","groups":["liveness","readiness"]}`; `/actuator/env` y `/actuator/beans` no expuestos; `/api/products` 200. Compose/override validados como YAML. Docker no instalado localmente → `docker build`/`compose up` se validan en CI/host.
+
+### Pendiente
+1. Notificar al usuario: **plan de 13 fases (FASE 0–12) completado** — cierre del proyecto.
+
+---
+
 ## Bloqueos / notas abiertas
 
 - **Force-push FASE 3.7 (secreto JWT)**: `git push --force origin main` → 403; la cuenta `gh` activa es `sixzyy` y **no tiene permiso de escritura** en `foxtrot0367/joyeria-main-mobile`. El remoto aún contiene el secreto JWT (tratado como comprometido). Opciones: reautenticar como `foxtrot0367`, añadir `sixzyy` como colaborador, o push desde otra máquina.
 - **E2E real de pagos**: bloqueado sin `MERCADOPAGO_ACCESS_TOKEN` real + URL pública (mitigado con `SandboxPaymentProvider` en dev).
 - **Verificación manual móvil 360/375/390/430 px (F8)**: no ejecutable sin navegador (guardas automáticas ya aplicadas).
-- **`Dockerfile` backend — HEALTHCHECK** apunta a `/api/health`, que **no existe** (no hay `HealthController`). `docker-compose.yml` lo sobreescribe con `/api/products`, por lo que hoy no rompe, pero conviene corregir el `Dockerfile` en FASE 12 (o añadir `/actuator/health`).
+- **`Dockerfile` backend — HEALTHCHECK**: corregido en FASE 12 a `/actuator/health` (con `spring-boot-starter-actuator`). ✅
 
 ---
 

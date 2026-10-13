@@ -282,11 +282,24 @@
 
 ---
 
-## FASE 12 — Producción
+## FASE 12 — Producción ✅
 
 **Objetivo:** despliegue real con seguridad perimetral.
 
 **Tareas:** perfiles dev/prod en compose (exponer solo 80/443, no 5432/8080), TLS (certbot/traefik o Caddy), `.env` con secretos fuertes, volumen `uploads`, healthchecks correctos (actuator `/actuator/health` — requiere añadir starter), logs estructurados sin DEBUG, backups de Postgres, README completo (I-M5), LICENSE, rotación de secretos verificada (C6), Spring Boot 4.x (B-A8) como decisión explícita.
+
+**Implementado:**
+1. ✅ **Actuator/health**: añadido `spring-boot-starter-actuator`; `management.endpoints.web.exposure.include: health` (solo health) con probes `liveness`/`readiness` y `show-details: never`. `SecurityConfig` permite `/actuator/health/**` sin autenticación. El indicador de salud de correo (`MailHealthIndicator`) está ligado a `EMAIL_ENABLED` (`management.health.mail.enabled: ${EMAIL_ENABLED:false}`) para evitar que `/actuator/health` reporte DOWN cuando el correo es opcional.
+2. ✅ **Compose prod-safe**: `docker-compose.yml` ya **no publica** `5432`/`8080`; solo Caddy (perfil `tls`) expone `80`/`443`. Servicios con `restart: unless-stopped`, `depends_on` con `condition: service_healthy`, red interna dedicada y secretos obligatorios vía `${VAR:?}`. **NUEVO** `docker-compose.dev.yml` (publica puertos + perfil `dev`) y **NUEVO** `Caddyfile` (TLS automático para `DOMAIN`).
+3. ✅ **Volumen `uploads`** (`uploads:/app/uploads`); `Dockerfile` del backend pre-crea `/app/uploads` con propietario `joyeria` (el contenedor corre como no-root) para que el volumen sea escribible.
+4. ✅ **Healthchecks coherentes**: `Dockerfile` backend y compose usan `GET /actuator/health`; frontend usa `GET /` (nginx).
+5. ✅ **Logs sin DEBUG**: **NUEVO** `application-prod.yml` con `root: INFO`, `org.springframework`/`hibernate` en `WARN`, patrón de consola y `show-details: never`.
+6. ✅ **Backups de Postgres**: **NUEVOS** `scripts/backup-db.sh` (pg_dump comprimido + retención 30 días) y `scripts/restore-db.sh`. Programables con cron/Task Scheduler.
+7. ✅ **Rotación de secretos (C6)**: `JWT_SECRET` obligatorio sin valor por defecto (el arranque falla si falta); procedimiento de rotación documentado en el README.
+8. ✅ **README completo (I-M5)** + **LICENSE** (MIT) + `.env.example` ampliado (dominio, ACME, proxies confiables, nivel de log) + `.gitattributes` (LF para scripts).
+9. ✅ **Decisión Spring Boot 4.x (B-A8)**: documentada explícitamente en el README — se permanece en 3.5.x y la migración a 4.0 se abordará como iniciativa independiente.
+
+**Verificación:** `mvn test` **119/119** ✅. Arranque real con perfil `dev` y con perfil `prod` contra PostgreSQL → `GET /actuator/health` **200** (`{"status":"UP","groups":["liveness","readiness"]}`); `/actuator/env` y `/actuator/beans` **no expuestos**; `/api/products` **200**. Compose y override validados como YAML; tags de las imágenes verificados en Docker Hub. (Docker no está instalado en el entorno de desarrollo, por lo que `docker build`/`compose up` se validan en CI y en el host de despliegue.)
 
 ---
 

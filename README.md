@@ -38,12 +38,56 @@ Sin el perfil `dev`, el backend arranca con la base de datos vacía (sin usuario
 - Admin: `admin@joyeria.com` / `admin123`
 - Cliente: `maria@example.com` / `user1234`
 
-### Con Docker
+## Despliegue con Docker
+
+El `docker-compose.yml` está pensado para **producción**: solo el proxy TLS (Caddy) publica
+puertos (`80`/`443`); PostgreSQL, el backend y el frontend quedan en la red interna de Docker.
+
+### 1. Preparar variables
 ```bash
 cp .env.example .env
-# Edita .env con tus credenciales
-docker compose up --build
+# Genera secretos fuertes (NO reutilices los de ejemplo):
+openssl rand -base64 48   # -> JWT_SECRET
+openssl rand -base64 24   # -> DATABASE_PASSWORD
 ```
+Edita `.env` y define al menos `DATABASE_PASSWORD`, `JWT_SECRET`, `FRONTEND_URL`,
+`DOMAIN` y `ACME_EMAIL`.
+
+### 2. Producción (con HTTPS)
+```bash
+docker compose --profile tls up -d --build
+```
+Caddy obtiene y renueva el certificado de `DOMAIN` automáticamente (Let's Encrypt).
+Con `DOMAIN=localhost` usa una CA interna (útil para pruebas).
+
+### 3. Desarrollo (puertos locales + perfil `dev` con datos de prueba)
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Frontend http://localhost:5173 · API http://localhost:8080 · PostgreSQL :5432
+```
+
+### Healthchecks
+- Backend: `GET /actuator/health` (incluye probes `liveness` y `readiness`).
+- Frontend: `GET /` (nginx).
+- PostgreSQL: `pg_isready`.
+
+## Operaciones
+
+### Backups de PostgreSQL
+```bash
+./scripts/backup-db.sh                                   # backups/joyeria-<fecha>.sql.gz (retención 30 días)
+./scripts/restore-db.sh backups/joyeria-<fecha>.sql.gz
+```
+Programa el backup con `cron` (Linux) o el Programador de tareas (Windows), p. ej. diario a las 03:00.
+
+### Logs
+En producción (`SPRING_PROFILES_ACTIVE=prod`) el backend registra en nivel `INFO`
+(Spring/Hibernate en `WARN`), sin `show-sql`. Ajusta `LOG_LEVEL` si hace falta.
+
+### Rotación de secretos
+`JWT_SECRET` es obligatorio y **no** tiene valor por defecto (el arranque falla si falta).
+Para rotarlo: genera uno nuevo, actualízalo en `.env` y reinicia el backend
+(`docker compose up -d backend`). Al rotarlo, los tokens ya emitidos dejan de ser válidos.
 
 ## Variables de entorno
 
@@ -56,6 +100,12 @@ docker compose up --build
 | `JWT_EXPIRATION` | Expiracion del token en ms | `86400000` |
 | `FRONTEND_URL` | URL del frontend para CORS | `http://localhost:5173` |
 | `SERVER_PORT` | Puerto del servidor | `8080` |
+| `DOMAIN` | Dominio público servido por Caddy (TLS) | `localhost` |
+| `ACME_EMAIL` | Correo para el certificado ACME (Let's Encrypt) | — |
+| `TRUSTED_PROXIES` | Subredes de proxies confiables para `X-Forwarded-For` (CSV) | `172.16.0.0/12` |
+| `LOG_LEVEL` | Nivel de log del backend en producción | `INFO` |
+| `PAYMENT_PROVIDER` | `sandbox` (dev) o `mercadopago` | `sandbox` |
+| `MERCADOPAGO_ACCESS_TOKEN` | Token de Checkout Pro (si `mercadopago`) | — |
 
 ## Tests
 
@@ -94,8 +144,18 @@ Configurar en *Settings → Branches → Add branch protection rule* para `main`
 > El job `Docker build` no se marca como obligatorio: se ejecuta solo en `push` a `main`.
 > (Opcional) Puede añadirse `actions/dependency-review-action` en los PR una vez habilitado el grafo de dependencias del repositorio.
 
+## Decisión: Spring Boot 4.x
+
+El backend permanece en **Spring Boot 3.5.x** (línea 3.x) con Java 25. Spring Boot 4.0
+(Spring Framework 7) es una migración mayor (revisión de APIs, dependencias y pruebas) que
+se evaluará como iniciativa independiente y no dentro de esta fase de endurecimiento de
+producción. Ruta prevista: abordarla en una rama aparte, validarla con la suite (119 tests)
+y el E2E de Playwright, y desplegarla por separado.
+
 ## Notas
-- No se incluyen credenciales, .env ni secretos; generarlos localmente.
+- No se incluyen credenciales, `.env` ni secretos; generarlos localmente (ver `.env.example`).
 - Paleta: negro profundo + dorado #D4AF37 (lujo).
 - El backend usa Flyway para migraciones de base de datos.
 - El frontend usa variables de entorno para la URL de la API (`VITE_API_URL`).
+- Licencia: [MIT](LICENSE).
+- Exposición de puertos: en producción **solo** `80`/`443` (Caddy). PostgreSQL y el backend no publican puertos al host.
