@@ -56,10 +56,10 @@ Credenciales seed (perfil `dev`): `admin@joyeria.com` / `admin123` (ADMIN, id=1)
 | F8 | Mobile | ✅ commit `3056e82` |
 | F9 | Performance | ✅ commit `6615fe8` |
 | F10 | Testing | ✅ (backend 119, frontend 20, E2E 1) |
-| F11 | CI/CD | ⏳ pendiente |
+| F11 | CI/CD | ✅ (workflow + branch protection doc) |
 | F12 | Cierre | ⏳ pendiente |
 
-HEAD local: `cb591fb` (F9 docs) + commit de F10 (testing).
+HEAD local: `d7666d8` (F10) + commit de F11 (CI/CD).
 Contadores: 88 endpoints (`TOTAL_MAPPINGS=88`, 21 controllers).
 
 ---
@@ -125,11 +125,28 @@ Frontend:
 
 ---
 
+## FASE 11 — CI/CD ✅
+
+- **NUEVO** `.github/workflows/ci.yml` (dispara en `push`/`pull_request` a `main`; `concurrency` con cancelación; `permissions: contents: read`):
+  - **backend** (JDK 25 temurin + cache Maven): `mvn -B -ntp verify` (119 tests + jar) + artefacto JaCoCo.
+  - **frontend** (Node 20 + cache npm): `npm ci` → `npm run lint` → `npm run test:coverage` → `npm run build` + artefacto de cobertura.
+  - **docker** (solo `push`, `needs: [backend, frontend]`): build de las imágenes de backend y frontend (no publica).
+- **Branch protection documentado** en `README.md` (§ Integración continua): PR obligatorio, checks requeridos `Backend (Java 25 / Maven)` y `Frontend (Node 20 / Vite)`, ramas al día; aprobaciones opcionales. Requiere admin del repo.
+- (Opcional) `dependency-review` documentado como mejora futura.
+- **Verificación local de los comandos del workflow:** `mvn -B -ntp verify` → BUILD SUCCESS (119 tests + jar); `npm ci` OK (lockfile sincronizado); `npm run lint` 0/10; `npm run test:coverage` 20/20; `npm run build` OK. Tags de los `Dockerfile` verificados en Docker Hub.
+- **Nota entorno:** `npm ci` local falla si el dev server de Vite está vivo (bloquea `node_modules`); detenerlo primero. Sin `@SpringBootTest`, el CI no necesita PostgreSQL.
+
+### Pendiente
+1. Notificar al usuario y **pedir autorización para FASE 12 — Producción**.
+
+---
+
 ## Bloqueos / notas abiertas
 
 - **Force-push FASE 3.7 (secreto JWT)**: `git push --force origin main` → 403; la cuenta `gh` activa es `sixzyy` y **no tiene permiso de escritura** en `foxtrot0367/joyeria-main-mobile`. El remoto aún contiene el secreto JWT (tratado como comprometido). Opciones: reautenticar como `foxtrot0367`, añadir `sixzyy` como colaborador, o push desde otra máquina.
 - **E2E real de pagos**: bloqueado sin `MERCADOPAGO_ACCESS_TOKEN` real + URL pública (mitigado con `SandboxPaymentProvider` en dev).
 - **Verificación manual móvil 360/375/390/430 px (F8)**: no ejecutable sin navegador (guardas automáticas ya aplicadas).
+- **`Dockerfile` backend — HEALTHCHECK** apunta a `/api/health`, que **no existe** (no hay `HealthController`). `docker-compose.yml` lo sobreescribe con `/api/products`, por lo que hoy no rompe, pero conviene corregir el `Dockerfile` en FASE 12 (o añadir `/actuator/health`).
 
 ---
 

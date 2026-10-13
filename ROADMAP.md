@@ -262,13 +262,23 @@
 
 ---
 
-## FASE 11 — CI/CD
+## FASE 11 — CI/CD ✅
 
 **Objetivo:** GitHub Actions en cada PR.
 
 **Tareas:** workflow con install → lint → tests → build frontend → build backend → (opcional) docker build. Branch protection documentado. Opcional: dependency review.
 
-**Nota:** la rama `main` actual ya falla lint/build — el workflow debe quedar en verde tras Fase 1.
+**Implementado:**
+1. ✅ **NUEVO** `.github/workflows/ci.yml`. Disparadores: `push` a `main` y `pull_request` hacia `main`; `concurrency` con cancelación en progreso; `permissions: contents: read`.
+   - Job **backend** (JDK 25 temurin, cache Maven): `mvn -B -ntp verify` (compila, 119 tests, empaqueta el jar) + subida del informe JaCoCo como artefacto.
+   - Job **frontend** (Node 20, cache npm): `npm ci` → `npm run lint` → `npm run test:coverage` → `npm run build` + subida de la cobertura.
+   - Job **docker** (solo en `push`, `needs: [backend, frontend]`): construye las imágenes `joyeria-backend:ci` y `joyeria-frontend:ci` para validar los `Dockerfile` (no se publica).
+2. ✅ **Branch protection documentado** en `README.md` (§ Integración continua): requerir PR, exigir los checks `Backend (Java 25 / Maven)` y `Frontend (Node 20 / Vite)`, ramas al día, aprobaciones opcionales. Requiere permisos de administrador del repositorio.
+3. ✅ (Opcional) `dependency-review` documentado como mejora futura (requiere habilitar el grafo de dependencias).
+
+**Verificación (comandos del workflow ejecutados localmente):** `mvn -B -ntp verify` → BUILD SUCCESS, `Tests run: 119`, jar generado; `npm ci` OK (lockfile sincronizado); `npm run lint` 0 errores/10 warnings; `npm run test:coverage` 20/20; `npm run build` OK. Etiquetas Docker de los `Dockerfile` verificadas como existentes en Docker Hub (`maven:3.9.15-eclipse-temurin-25-alpine`, `eclipse-temurin:25-jre-alpine`, `node:20-alpine`, `nginx:alpine`).
+
+**Nota:** la rama `main` actual ya no falla lint/build (quedó en verde desde Fase 1); el workflow no requiere base de datos (no hay tests `@SpringBootTest`).
 
 ---
 

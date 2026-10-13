@@ -62,14 +62,37 @@ docker compose up --build
 ### Backend
 ```bash
 cd joyeria-backend
-mvn test
+mvn test        # 119 tests (JUnit 5 + Mockito + MockMvc); informe JaCoCo en target/site/jacoco/
 ```
 
 ### Frontend
 ```bash
 cd joyeria-frontend
-npm run lint
+npm run lint            # ESLint (0 errores)
+npm test                # Vitest + Testing Library (20 tests)
+npm run test:coverage   # tests + cobertura (v8)
+npm run test:e2e        # Playwright (requiere backend y dev server activos)
 ```
+
+## Integración continua (CI)
+
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en cada `push` a `main` y en cada `pull_request` hacia `main`:
+
+1. **Backend** (JDK 25): `mvn -B -ntp verify` — compila, ejecuta los 119 tests y empaqueta el jar. Sube el informe JaCoCo como artefacto.
+2. **Frontend** (Node 20): `npm ci` → `npm run lint` → `npm run test:coverage` → `npm run build`. Sube el informe de cobertura.
+3. **Docker** (solo en `push` a `main`): construye las imágenes de backend y frontend para validar los `Dockerfile`.
+
+### Protección de rama (recomendada)
+
+Configurar en *Settings → Branches → Add branch protection rule* para `main` (requiere permisos de administrador del repositorio):
+
+- **Require a pull request before merging**.
+- **Require status checks to pass before merging** → marcar `Backend (Java 25 / Maven)` y `Frontend (Node 20 / Vite)` como obligatorios.
+- **Require branches to be up to date before merging**.
+- (Opcional) *Require approvals* ≥ 1 y *Do not allow bypassing the above settings*.
+
+> El job `Docker build` no se marca como obligatorio: se ejecuta solo en `push` a `main`.
+> (Opcional) Puede añadirse `actions/dependency-review-action` en los PR una vez habilitado el grafo de dependencias del repositorio.
 
 ## Notas
 - No se incluyen credenciales, .env ni secretos; generarlos localmente.
