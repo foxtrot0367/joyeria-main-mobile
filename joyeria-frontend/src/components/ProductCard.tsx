@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Heart, ShoppingCart, Eye } from 'lucide-react'
@@ -14,7 +15,7 @@ interface Props {
   isFavorite?: boolean
 }
 
-export default function ProductCard({ product, onAddToCart, onQuickView, onToggleFavorite, isFavorite }: Props) {
+function ProductCard({ product, onAddToCart, onQuickView, onToggleFavorite, isFavorite }: Props) {
   const img = product.images?.length ? product.images[0].url : ''
   const img2 = product.images && product.images.length > 1 ? product.images[1].url : ''
   const reduced = useReducedMotion()
@@ -106,3 +107,5 @@ export default function ProductCard({ product, onAddToCart, onQuickView, onToggl
     </motion.div>
   )
 }
+
+export default memo(ProductCard)

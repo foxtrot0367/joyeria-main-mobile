@@ -8,6 +8,7 @@ import com.joyeria.repository.AddressRepository;
 import com.joyeria.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class AddressService {
         return addressRepository.findByUserId(user.getId()).stream().map(this::mapToDTO).toList();
     }
 
+    @Transactional
     public AddressDTO createAddress(String email, AddressCreateRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
@@ -51,6 +53,7 @@ public class AddressService {
         return mapToDTO(addressRepository.save(address));
     }
 
+    @Transactional
     public AddressDTO updateAddress(String email, Long id, AddressCreateRequest request) {
         Address address = getOwnedAddress(email, id);
         if (request.getFirstName() != null) address.setFirstName(request.getFirstName());
@@ -66,6 +69,7 @@ public class AddressService {
         return mapToDTO(addressRepository.save(address));
     }
 
+    @Transactional
     public void deleteAddress(String email, Long id) {
         Address address = getOwnedAddress(email, id);
         addressRepository.delete(address);

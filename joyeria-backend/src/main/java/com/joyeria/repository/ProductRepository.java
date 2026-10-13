@@ -27,6 +27,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByBestSellerTrueAndActiveTrue(Pageable pageable);
     List<Product> findTop10ByActiveTrueOrderBySoldCountDesc();
 
+    @Query("SELECT p.category.id, COUNT(p) FROM Product p WHERE p.active = true AND p.category IS NOT NULL GROUP BY p.category.id")
+    List<Object[]> countActiveGroupedByCategory();
+
     long countByActiveTrueAndStockLessThanEqual(int stock);
 
     long countByActiveTrueAndStockGreaterThanAndStockLessThanEqual(int minExclusive, int maxInclusive);

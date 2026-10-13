@@ -8,20 +8,28 @@ import com.joyeria.repository.CategoryRepository;
 import com.joyeria.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
 
     public List<CategoryDTO> getAllCategories() {
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : productRepository.countActiveGroupedByCategory()) {
+            counts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+        }
         return categoryRepository.findByActiveTrueOrderByDisplayOrderAsc()
-                .stream().map(this::mapToDTO).toList();
+                .stream().map(c -> mapToDTO(c, counts.getOrDefault(c.getId(), 0L))).toList();
     }
 
     public CategoryDTO getCategoryById(Long id) {
@@ -36,6 +44,7 @@ public class CategoryService {
         return mapToDTO(category);
     }
 
+    @Transactional
     public CategoryDTO createCategory(CategoryCreateRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
             throw new IllegalArgumentException("La categoría ya existe");
@@ -50,6 +59,7 @@ public class CategoryService {
         return mapToDTO(categoryRepository.save(category));
     }
 
+    @Transactional
     public CategoryDTO updateCategory(Long id, CategoryCreateRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
@@ -61,6 +71,7 @@ public class CategoryService {
         return mapToDTO(categoryRepository.save(category));
     }
 
+    @Transactional
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoría no encontrada"));
@@ -71,10 +82,14 @@ public class CategoryService {
     private CategoryDTO mapToDTO(Category category) {
         long productCount = 0;
         try {
-            productCount = productRepository.findByCategoryIdAndActiveTrue(category.getId(), 
+            productCount = productRepository.findByCategoryIdAndActiveTrue(category.getId(),
                     org.springframework.data.domain.PageRequest.of(0, 1)).getTotalElements();
         } catch (Exception e) { /* ignore */ }
-        
+
+        return mapToDTO(category, productCount);
+    }
+
+    private CategoryDTO mapToDTO(Category category, long productCount) {
         return CategoryDTO.builder()
                 .id(category.getId())
                 .name(category.getName())

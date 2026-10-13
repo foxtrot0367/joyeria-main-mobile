@@ -187,6 +187,7 @@ public class PaymentService {
         return toStatus(order, payment);
     }
 
+    @Transactional(readOnly = true)
     public PaymentStatusDTO getPaymentStatus(String orderNumber, String userEmail, boolean isAdmin) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado"));

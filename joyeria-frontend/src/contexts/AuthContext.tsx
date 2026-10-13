@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import type { User } from '../types'
 import { authService } from '../services/auth.service'
 
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUser()
   }, [loadUser])
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setAuthLoading(true)
     try {
       const res = await authService.login(email, password)
@@ -64,9 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setAuthLoading(false)
     }
-  }
+  }, [])
 
-  const register = async (userData: RegisterData) => {
+  const register = useCallback(async (userData: RegisterData) => {
     setAuthLoading(true)
     try {
       const res = await authService.register(userData)
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setAuthLoading(false)
     }
-  }
+  }, [])
 
   const logout = useCallback(() => {
     const refreshToken = localStorage.getItem('refreshToken')
@@ -90,8 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const value = useMemo(
+    () => ({ user, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', loading, authLoading, login, register, logout, refreshUser: loadUser }),
+    [user, loading, authLoading, login, register, logout, loadUser]
+  )
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isAdmin: user?.role === 'ADMIN', loading, authLoading, login, register, logout, refreshUser: loadUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

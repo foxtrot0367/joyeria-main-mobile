@@ -26,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OrderService {
 
     private static final BigDecimal FREE_SHIPPING_THRESHOLD = BigDecimal.valueOf(500000);

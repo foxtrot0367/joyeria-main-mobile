@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import type { Cart } from '../types'
 import { cartService } from '../services/cart.service'
 import { getErrorMessage } from '../utils/errors'
@@ -41,7 +41,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refreshCart() }, [refreshCart])
 
-  const runMutation = async (
+  const runMutation = useCallback(async (
     key: number,
     action: () => Promise<Cart | void>,
     fallbackMessage: string,
@@ -57,18 +57,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setPendingItemId(null)
     }
-  }
+  }, [])
 
-  const addItem = (productId: number, quantity = 1) =>
-    runMutation(productId, () => cartService.addItem(productId, quantity), 'No se pudo agregar el producto al carrito')
+  const addItem = useCallback((productId: number, quantity = 1) =>
+    runMutation(productId, () => cartService.addItem(productId, quantity), 'No se pudo agregar el producto al carrito'), [runMutation])
 
-  const updateQuantity = (itemId: number, quantity: number) =>
-    runMutation(itemId, () => cartService.updateQuantity(itemId, quantity), 'No se pudo actualizar la cantidad')
+  const updateQuantity = useCallback((itemId: number, quantity: number) =>
+    runMutation(itemId, () => cartService.updateQuantity(itemId, quantity), 'No se pudo actualizar la cantidad'), [runMutation])
 
-  const removeItem = (itemId: number) =>
-    runMutation(itemId, () => cartService.removeItem(itemId), 'No se pudo eliminar el producto')
+  const removeItem = useCallback((itemId: number) =>
+    runMutation(itemId, () => cartService.removeItem(itemId), 'No se pudo eliminar el producto'), [runMutation])
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     setError(null)
     setPendingItemId(-1)
     try {
@@ -80,10 +80,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       setPendingItemId(null)
     }
-  }
+  }, [])
+
+  const value = useMemo(
+    () => ({ cart, itemCount: cart?.itemCount || 0, loading, error, pendingItemId, clearError, addItem, updateQuantity, removeItem, clearCart, refreshCart }),
+    [cart, loading, error, pendingItemId, clearError, addItem, updateQuantity, removeItem, clearCart, refreshCart]
+  )
 
   return (
-    <CartContext.Provider value={{ cart, itemCount: cart?.itemCount || 0, loading, error, pendingItemId, clearError, addItem, updateQuantity, removeItem, clearCart, refreshCart }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   )

@@ -9,11 +9,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -41,7 +43,7 @@ public class ReviewService {
         return mapToPagedResponse(reviews);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public ReviewDTO createReview(String email, ReviewCreateRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
@@ -71,7 +73,7 @@ public class ReviewService {
         return mapToDTO(reviewRepository.save(review));
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public ReviewDTO moderateReview(Long id, String status) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reseña no encontrada"));

@@ -226,11 +226,20 @@
 
 ---
 
-## FASE 9 — Performance
+## FASE 9 — Performance ✅
 
 **Objetivo:** optimización medida, sin premature optimization.
 
 **Tareas:** revisar N+1 (B-M2), OSIV off + `@Transactional`/`JOIN FETCH` (B-M4), índices (B-B6), tamaños de página; frontend: debounce de búsqueda, memo donde aporte, imágenes responsive/WebP (Cloudinary si hay credenciales), revisar chunks. Medir antes/después.
+
+**Implementado:**
+1. ✅ OSIV desactivado (`spring.jpa.open-in-view: false`) y `hibernate.default_batch_fetch_size: 30` para mitigar N+1 en colecciones lazy (B-M4/B-M2). Con OSIV off, se añadieron transacciones de lectura `@Transactional(readOnly = true)` a nivel de clase en los servicios que mapean asociaciones lazy: `ProductService`, `OrderService`, `FavoriteService`, `SupportService`, `CategoryService`, `ReviewService`; `CartService` (readOnly en clase, `@Transactional` read-write en `getCart` porque persiste el carrito vacío); `@Transactional` en métodos de escritura de `CategoryService`/`AddressService`/`ReviewService`/`ProductService.deleteProduct`; `PaymentService.getPaymentStatus` readOnly.
+2. ✅ N+1 de counts en `CategoryService.getAllCategories()` eliminado: nueva consulta `ProductRepository.countActiveGroupedByCategory()` (una sola query agrupada) y `mapToDTO(Category, long)`.
+3. ✅ Índices faltantes de claves foráneas (B-B6) en `V13__favorite_fk_indexes.sql`: `support_tickets.user_id`, `ticket_responses.ticket_id`, `reviews.user_id` y UNIQUE `reviews(user_id, product_id)` (con deduplicación previa).
+4. ✅ Frontend: `ProductCard` envuelto en `memo`; `Catalog` con callbacks estables (`useCallback`) y **debounce de 400 ms** en los inputs de precio (evita una petición por pulsación); `AuthContext`/`CartContext` con callbacks `useCallback` y value del provider `useMemo`. Los chunks ya estaban separados (`manualChunks`: react/motion/icons).
+5. ✅ Tamaños de página acotados por `ProductService.MAX_PAGE_SIZE = 50` (heredado de Fase 4).
+
+**Verificación:** `mvn -o test` **95/95** ✅. Arranque real con OSIV off contra PostgreSQL (Flyway migró a **v13**). Smoke E2E completo (`smoke6.ps1`) OK: login, dashboard, upload, producto, compra + pago sandbox, detalle admin, transiciones, protección último admin, soporte, reseñas. Rutas lazy bajo OSIV off (`/api/categories` con `productCount`, `/api/admin/orders` con items, `/api/favorites`, `/api/cart`) → 200 sin `LazyInitializationException`. `npm run lint` (0 errores, 10 warnings preexistentes), `npm run build` OK.
 
 ---
 

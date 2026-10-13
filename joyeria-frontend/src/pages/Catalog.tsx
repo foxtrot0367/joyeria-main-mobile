@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { SlidersHorizontal, X, Check } from 'lucide-react'
@@ -41,7 +41,24 @@ export default function Catalog() {
   const minPrice = searchParams.get('minPrice') || ''
   const maxPrice = searchParams.get('maxPrice') || ''
 
+  const [priceMin, setPriceMin] = useState(minPrice)
+  const [priceMax, setPriceMax] = useState(maxPrice)
+
   useDocumentTitle(query ? `Resultados: ${query}` : 'Productos')
+
+  useEffect(() => {
+    if (priceMin === minPrice && priceMax === maxPrice) return
+    const t = setTimeout(() => {
+      setSearchParams(prev => {
+        const params = new URLSearchParams(prev)
+        if (priceMin) params.set('minPrice', priceMin); else params.delete('minPrice')
+        if (priceMax) params.set('maxPrice', priceMax); else params.delete('maxPrice')
+        params.set('page', '0')
+        return params
+      })
+    }, 400)
+    return () => clearTimeout(t)
+  }, [priceMin, priceMax, minPrice, maxPrice, setSearchParams])
 
   useEffect(() => {
     categoryService.getAll().then(setCategories).catch(() => {})
@@ -78,13 +95,15 @@ export default function Catalog() {
   const toggleInStock = () => updateParams('inStock', inStock ? '' : 'true')
 
   const clearFilters = () => {
+    setPriceMin('')
+    setPriceMax('')
     setSearchParams(query ? { q: query } : {})
   }
 
-  const handleAddToCart = async (id: number, qty = 1) => {
+  const handleAddToCart = useCallback(async (id: number, qty = 1) => {
     try { await addItem(id, qty); toast('Agregado al carrito') }
     catch { toast('Error al agregar', 'error') }
-  }
+  }, [addItem, toast])
 
   const hasFilters = category || material || color || inStock || minPrice || maxPrice
   const activeChips = [
@@ -167,9 +186,9 @@ export default function Catalog() {
         <div>
           <h4 className="font-medium text-sm text-foreground mb-3">Precio</h4>
           <div className="flex gap-2">
-            <input type="number" placeholder="Mín" value={minPrice} onChange={e => updateParams('minPrice', e.target.value)}
+            <input type="number" placeholder="Mín" value={priceMin} onChange={e => setPriceMin(e.target.value)}
               className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-[#C9A227]" />
-            <input type="number" placeholder="Máx" value={maxPrice} onChange={e => updateParams('maxPrice', e.target.value)}
+            <input type="number" placeholder="Máx" value={priceMax} onChange={e => setPriceMax(e.target.value)}
               className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-[#C9A227]" />
           </div>
         </div>
@@ -229,8 +248,8 @@ export default function Catalog() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                 {products.map(p => (
                   <ProductCard key={p.id} product={p}
-                    onAddToCart={(id) => handleAddToCart(id)}
-                    onQuickView={(prod) => setQuickView(prod)}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={setQuickView}
                   />
                 ))}
               </div>
