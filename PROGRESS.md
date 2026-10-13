@@ -51,19 +51,19 @@ Credenciales seed (perfil `dev`): `admin@joyeria.com` / `admin123` (ADMIN, id=1)
 | F6 | Panel admin | ✅ |
 | F7 | UI/UX | ✅ commit `5fca33d` |
 | F8 | Mobile | ✅ commit `3056e82` |
-| **F9** | **Performance** | 🚧 EN CURSO (cambios aplicados, sin commitear) |
-| F10 | Testing | ⏳ pendiente |
+| F9 | Performance | ✅ commit `6615fe8` |
+| F10 | Testing | ⏳ pendiente (siguiente) |
 | F11 | CI/CD | ⏳ pendiente |
 | F12 | Cierre | ⏳ pendiente |
 
-HEAD local: `3056e82`. Rama `main` `[ahead 65, behind 10]` respecto a `origin/main`.
+HEAD local: `6615fe8`. Rama `main` (ahead/behind respecto a `origin/main`).
 Contadores: 88 endpoints (`TOTAL_MAPPINGS=88`, 21 controllers).
 
 ---
 
-## FASE 9 — Performance (EN CURSO)
+## FASE 9 — Performance ✅ (commit `6615fe8`)
 
-### Cambios aplicados (sin commitear)
+### Cambios aplicados
 Backend:
 - `application.yml`: `spring.jpa.open-in-view: false` (B-M4) + `hibernate.default_batch_fetch_size: 30` (mitigación global de N+1).
 - Transacciones de lectura `@Transactional(readOnly = true)` a nivel de clase:
@@ -90,11 +90,9 @@ Frontend:
 - Pruebas extra (rutas lazy bajo OSIV off): `/api/categories` (con `productCount`), `/api/admin/orders` (con items), `/api/favorites`, `/api/cart` → **200** ✅. Sin `LazyInitializationException`.
 - Frontend: `npm run lint` → 0 errores / 10 warnings; `npm run build` → OK con chunks separados (react 162 kB, motion 122 kB, icons 30 kB, index 98 kB) ✅.
 
-### Pendiente F9
+### Pendiente
 1. Confirmar la prueba de favoritos con imágenes (chequeo de script, no del server).
-2. Marcar FASE 9 como ✅ en `ROADMAP.md` (y `ARCHITECTURE.md` si aplica).
-3. Commit `perf(...) (F9)`.
-4. Notificar al usuario y **pedir autorización para FASE 10 — Testing**.
+2. Notificar al usuario y **pedir autorización para FASE 10 — Testing**.
 
 ---
 
