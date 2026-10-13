@@ -76,6 +76,21 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY:}
   api-secret: ${CLOUDINARY_API_SECRET:}
 
+ai:
+  # Asistente de compras. Sin proveedor configurado funciona en modo determinista
+  # (interpreta la intención por reglas y consulta productos reales de PostgreSQL).
+  enabled: ${AI_ENABLED:false}
+  provider: ${AI_PROVIDER:openai-compatible}
+  api-key: ${AI_API_KEY:}
+  base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+  model: ${AI_MODEL:gpt-4o-mini}
+  timeout-seconds: ${AI_TIMEOUT_SECONDS:15}
+  max-message-length: ${AI_MAX_MESSAGE_LENGTH:500}
+  max-products: ${AI_MAX_PRODUCTS:4}
+  max-candidates: ${AI_MAX_CANDIDATES:50}
+  compose-response: ${AI_COMPOSE_RESPONSE:true}
+  temperature: ${AI_TEMPERATURE:0.2}
+
 management:
   endpoints:
     web:

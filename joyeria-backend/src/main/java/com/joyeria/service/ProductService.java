@@ -228,6 +228,17 @@ public class ProductService {
         return List.of();
     }
 
+    /**
+     * Mapea una colección de entidades {@link Product} a {@link ProductDTO},
+     * reutilizando el cálculo de ratings. Expuesto para servicios que trabajan
+     * con productos ya cargados (p. ej. el asistente de compras).
+     */
+    public List<ProductDTO> mapProducts(Collection<Product> products) {
+        List<Product> list = List.copyOf(products);
+        Map<Long, double[]> ratings = ratingsByProduct(list);
+        return list.stream().map(product -> mapToDTO(product, ratings)).toList();
+    }
+
     private ProductDTO mapToDTO(Product product) {
         return mapToDTO(product, ratingsByProduct(List.of(product)));
     }
