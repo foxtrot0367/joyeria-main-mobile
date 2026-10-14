@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, ShoppingCart, ChevronRight, Truck, Shield, Award, Star, Minus, Plus } from 'lucide-react'
+import { Heart, ShoppingCart, ChevronRight, Truck, Shield, Award, Star, Minus, Plus, Maximize2 } from 'lucide-react'
 import { productService } from '../services/product.service'
 import { userService } from '../services/user.service'
 import useAbortableEffect from '../hooks/useAbortableEffect'
@@ -14,6 +14,7 @@ import Price from '../components/Price'
 import ReviewCard from '../components/ReviewCard'
 import Skeleton from '../components/Skeleton'
 import SmartImage from '../components/SmartImage'
+import ImageLightbox from '../components/ImageLightbox'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 
 export default function ProductDetail() {
@@ -24,6 +25,7 @@ export default function ProductDetail() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [activeImage, setActiveImage] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [isFavorite, setIsFavorite] = useState(false)
   const { addItem } = useCart()
@@ -87,13 +89,19 @@ export default function ProductDetail() {
       <div className="grid lg:grid-cols-2 gap-10">
         {/* Gallery */}
         <div>
-          <AnimatePresence mode="wait">
-            <motion.div key={activeImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="aspect-square rounded-xl overflow-hidden bg-background-warm border border-line/70 mb-4">
-              <SmartImage src={images[activeImage].url} alt={product.name || 'Joya'} eager
-                className="w-full h-full object-cover" />
-            </motion.div>
-          </AnimatePresence>
+          <div className="relative mb-4">
+            <AnimatePresence mode="wait">
+              <motion.div key={activeImage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="aspect-square rounded-xl overflow-hidden bg-background-warm border border-line/70">
+                <SmartImage src={images[activeImage].url} alt={product.name || 'Joya'} eager
+                  className="w-full h-full object-cover" />
+              </motion.div>
+            </AnimatePresence>
+            <button type="button" onClick={() => setLightboxOpen(true)} aria-label={`Ampliar imagen de ${product.name || 'la joya'}`}
+              className="absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-line/70 bg-surface/90 text-foreground-muted shadow-md backdrop-blur transition hover:border-[#C9A227] hover:text-[#C9A227]">
+              <Maximize2 size={17} />
+            </button>
+          </div>
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-3">
               {images.map((img, i) => (
@@ -220,6 +228,14 @@ export default function ProductDetail() {
           </div>
         </section>
       )}
+
+      <ImageLightbox
+        src={images[activeImage]?.url ?? null}
+        alt={product.name || 'Joya'}
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        caption={product.name}
+      />
     </div>
   )
 }

@@ -13,7 +13,7 @@ import Logo from '../components/Logo'
 import { useCart } from '../contexts/CartContext'
 import { useToast } from '../contexts/ToastContext'
 import { userService } from '../services/user.service'
-import Skeleton from '../components/Skeleton'
+import EditorialCategories from '../components/EditorialCategories'
 import useDocumentTitle from '../hooks/useDocumentTitle'
 import { getErrorMessage } from '../utils/errors'
 
@@ -82,7 +82,7 @@ export default function Home() {
       categoryService.getAll().then(setCategories),
       materialService.getAll().then(setMaterials),
       userService.getRecentReviews().then(setReviews),
-      productService.getAll({ size: 100 }).then(res => {
+      productService.getAll({ size: 50 }).then(res => {
         const map: Record<string, string> = {}
         for (const p of res.content) {
           const key = String(p.categoryId ?? '')
@@ -228,66 +228,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Categories — editorial magazine ===== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-          className="flex items-end justify-between mb-14">
-          <div>
-            <p className="text-sm font-medium tracking-[0.25em] text-[#C9A227] uppercase mb-3">Explora el atelier</p>
-            <h2 className="font-serif text-4xl font-medium text-foreground">Una casa para cada momento</h2>
-          </div>
-          <Link to="/productos" className="hidden md:flex items-center gap-1.5 text-sm text-foreground dark:text-gray-300 dark:hover:text-[#F5D06F] hover:text-[#C9A227] transition-colors">
-            Ver todas las categorías <ArrowRight size={15} />
-          </Link>
-        </motion.div>
-
-        {loading ? <Skeleton className="h-72" count={4} /> : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-            {categories.map((cat, i) => {
-              const large = i === 0
-              return (
-                <motion.div key={cat.id} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
-                  transition={{ delay: (i % 4) * 0.08 }}
-                  className={large ? 'sm:col-span-2' : ''}>
-                  <Link to={`/productos?category=${cat.id}`}
-                    className={`group block ${large ? 'aspect-[4/5] sm:aspect-auto lg:h-full' : 'aspect-[4/5]'}`}>
-                    <div className="relative h-full flex flex-col overflow-hidden rounded-3xl border border-line/40 transition-colors group-hover:border-[#C9A227]/70 bg-gradient-to-br from-[#241F19] to-[#0C0A08] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
-                      {/* Stage decor */}
-                      <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#C9A227] to-[#F5D06F] opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
-                      <div aria-hidden className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-[#C9A227]/10 blur-2xl" />
-                      <div aria-hidden className="absolute -bottom-16 -left-12 w-44 h-44 rounded-full bg-[#C9A227]/10 blur-2xl" />
-
-                      {/* Foto real del producto */}
-                      <div className="relative mx-3 mt-4 sm:mx-4 overflow-hidden rounded-2xl bg-[#17130E]/60">
-                        <img
-                          src={categoryImages[cat.id] || cat.image || undefined}
-                          alt={cat.name}
-                          loading="lazy"
-                          decoding="async"
-                          className={`h-auto w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] ${large ? 'max-h-48 sm:max-h-60 lg:max-h-72' : 'max-h-44 sm:max-h-52'}`}
-                        />
-                      </div>
-
-                      {/* Text layer */}
-                      <div className={`relative mt-auto ${large ? 'p-5 md:p-7' : 'p-5'}`}>
-                        <p className="text-[11px] font-semibold tracking-[0.22em] text-[#F5D06F] uppercase mb-2">Colección {String(i + 1).padStart(2, '0')}</p>
-                        <h3 className={`font-serif text-white font-medium leading-[1.12] ${large ? 'text-2xl md:text-3xl mb-4' : 'text-xl mb-3'}`}>{cat.name}</h3>
-                        <span className="inline-flex items-center gap-2 text-[13px] font-medium text-white/95 rounded-full border border-white/35 px-5 py-2 backdrop-blur-sm transition-all group-hover:border-[#F5D06F] group-hover:text-[#F5D06F]">
-                          Ver piezas <ArrowRight size={14} className="translate-x-0 group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      </div>
-
-                      {/* Glam estático */}
-                      <div aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl"
-                        style={{ background: 'radial-gradient(420px circle at 50% 35%, rgba(245,208,111,0.10), transparent 45%)' }} />
-                    </div>
-                  </Link>
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+      {/* ===== Categories — editorial boutique (círculos + zoom) ===== */}
+      <EditorialCategories categories={categories} images={categoryImages} loading={loading} />
 
       {/* ===== Story editorial ===== */}
       <section className="bg-background-warm py-24">
