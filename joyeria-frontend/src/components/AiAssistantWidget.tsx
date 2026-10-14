@@ -8,13 +8,15 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { formatPrice } from '../utils/format'
 import { getErrorMessage } from '../utils/errors'
-import type { AiProductSuggestion } from '../types'
+import type { AiConversationTurn, AiProductSuggestion } from '../types'
 
 interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
   products?: AiProductSuggestion[]
+  followUpQuestion?: string
+  suggestions?: string[]
 }
 
 const GREETING: ChatMessage = {
@@ -45,9 +47,8 @@ export default function AiAssistantWidget() {
 
   if (!aiAssistantEnabled) return null
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
-    const text = input.trim()
+  const send = async (raw: string) => {
+    const text = raw.trim()
     if (!text || loading) return
 
     const userMessage: ChatMessage = { id: `u-${Date.now()}`, role: 'user', text }
@@ -55,11 +56,23 @@ export default function AiAssistantWidget() {
     setInput('')
     setLoading(true)
 
+    const history: AiConversationTurn[] = messages
+      .filter((message) => message.id !== GREETING.id)
+      .slice(-8)
+      .map((message) => ({ role: message.role, content: message.text }))
+
     try {
-      const response = await aiService.ask(text)
+      const response = await aiService.ask(text, history)
       setMessages((prev) => [
         ...prev,
-        { id: `a-${Date.now()}`, role: 'assistant', text: response.message, products: response.products },
+        {
+          id: `a-${Date.now()}`,
+          role: 'assistant',
+          text: response.message,
+          products: response.products,
+          followUpQuestion: response.followUpQuestion ?? undefined,
+          suggestions: response.suggestions,
+        },
       ])
     } catch (error) {
       setMessages((prev) => [
@@ -73,6 +86,11 @@ export default function AiAssistantWidget() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    void send(input)
   }
 
   const handleAdd = async (product: AiProductSuggestion) => {
@@ -162,6 +180,24 @@ export default function AiAssistantWidget() {
                             </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                  {message.followUpQuestion && (
+                    <p className="mt-1 text-xs text-foreground-muted">{message.followUpQuestion}</p>
+                  )}
+                  {message.suggestions && message.suggestions.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {message.suggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => void send(suggestion)}
+                          disabled={loading}
+                          className="rounded-full border border-border px-3 py-1 text-xs text-foreground-muted hover:border-primary hover:text-foreground disabled:opacity-50"
+                        >
+                          {suggestion}
+                        </button>
                       ))}
                     </div>
                   )}

@@ -161,11 +161,11 @@ public class GiftFinderService {
     private List<Product> fetch(Long materialId, BigDecimal min, BigDecimal max) {
         Pageable pageable = PageRequest.of(0, MAX_CANDIDATES, Sort.by(Sort.Direction.DESC, "soldCount"));
         List<Product> products = productRepository
-                .searchFiltered(null, null, materialId, min, max, "", false, pageable)
+                .searchFiltered("", null, materialId, min, max, "", false, pageable)
                 .getContent();
         if (products.isEmpty() && materialId != null) {
             products = productRepository
-                    .searchFiltered(null, null, null, min, max, "", false, pageable)
+                    .searchFiltered("", null, null, min, max, "", false, pageable)
                     .getContent();
         }
         return products;

@@ -56,7 +56,30 @@ describe('AiAssistantWidget', () => {
 
     expect(await screen.findByText('Estas opciones te pueden gustar.')).toBeInTheDocument()
     expect(screen.getByText('Aretes Luna')).toBeInTheDocument()
-    expect(askMock).toHaveBeenCalledWith('busco un regalo')
+    expect(askMock).toHaveBeenCalledWith('busco un regalo', [])
+  })
+
+  it('renders follow-up suggestions and sends one when clicked', async () => {
+    askMock
+      .mockResolvedValueOnce({
+        message: 'Estas opciones te pueden gustar.',
+        products: [],
+        followUpQuestion: '¿Tienes un presupuesto en mente?',
+        suggestions: ['Más barato', 'Solo disponibles'],
+      })
+      .mockResolvedValue({ message: 'Listo.', products: [] })
+    renderWidget()
+
+    fireEvent.click(screen.getByLabelText('Abrir asistente de compras'))
+    fireEvent.change(screen.getByLabelText('Escribe tu consulta'), { target: { value: 'busco un regalo' } })
+    fireEvent.click(screen.getByLabelText('Enviar consulta'))
+
+    expect(await screen.findByText('¿Tienes un presupuesto en mente?')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Más barato' }))
+
+    await waitFor(() =>
+      expect(askMock).toHaveBeenLastCalledWith('Más barato', expect.any(Array)),
+    )
   })
 
   it('adds a suggested product to the cart', async () => {

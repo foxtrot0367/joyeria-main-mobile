@@ -19,6 +19,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -46,7 +48,7 @@ class AiAssistantControllerTest {
 
     @Test
     void validMessageReturnsMessageAndProducts() throws Exception {
-        when(aiAssistantService.assist("Busco un regalo")).thenReturn(AiAssistantResponse.builder()
+        when(aiAssistantService.assist(eq("Busco un regalo"), any())).thenReturn(AiAssistantResponse.builder()
                 .message("Encontré algunas opciones que podrían interesarte.")
                 .products(List.of(AiProductSuggestion.builder()
                         .id(1L).name("Anillo Aurora").price(new BigDecimal("185000")).available(true).build()))
@@ -84,7 +86,7 @@ class AiAssistantControllerTest {
 
     @Test
     void endpointIsPublicForUnauthenticatedUsers() throws Exception {
-        when(aiAssistantService.assist(anyString())).thenReturn(
+        when(aiAssistantService.assist(anyString(), any())).thenReturn(
                 AiAssistantResponse.builder().message("ok").products(List.of()).build());
 
         mockMvc.perform(post("/api/ai/assistant")

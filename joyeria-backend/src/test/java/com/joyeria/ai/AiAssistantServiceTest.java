@@ -3,6 +3,7 @@ package com.joyeria.ai;
 import com.joyeria.ai.client.AiChatClient;
 import com.joyeria.ai.config.AiProperties;
 import com.joyeria.ai.dto.AiAssistantResponse;
+import com.joyeria.ai.dto.AiConversationTurn;
 import com.joyeria.dto.ProductDTO;
 import com.joyeria.dto.ProductImageDTO;
 import com.joyeria.repository.CategoryRepository;
@@ -10,6 +11,7 @@ import com.joyeria.repository.MaterialRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,11 +22,15 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,7 +53,9 @@ class AiAssistantServiceTest {
     @BeforeEach
     void setUp() {
         properties = new AiProperties();
-        service = new AiAssistantService(properties, new SearchIntentParser(), productSearchService,
+        SearchIntentParser parser = new SearchIntentParser();
+        service = new AiAssistantService(properties, new IntentClassifier(), parser,
+                new ConversationContextResolver(parser), new AssistantSuggestions(), productSearchService,
                 recommendationService, aiChatClient, categoryRepository, materialRepository);
     }
 
@@ -97,6 +105,21 @@ class AiAssistantServiceTest {
 
         assertTrue(response.getProducts().isEmpty());
         assertTrue(response.getMessage().contains("No encontré"));
+        assertNotNull(response.getFollowUpQuestion());
+        assertFalse(response.getSuggestions().isEmpty());
+    }
+
+    @Test
+    void productResponseIncludesSuggestionsAndFollowUp() {
+        when(aiChatClient.isEnabled()).thenReturn(false);
+        when(productSearchService.findCandidates(any())).thenReturn(List.of(product(5)));
+        when(recommendationService.recommend(any(), any(), anyInt()))
+                .thenReturn(List.of(recommendation(product(5))));
+
+        AiAssistantResponse response = service.assist("busco un anillo de plata");
+
+        assertFalse(response.getSuggestions().isEmpty());
+        assertNotNull(response.getFollowUpQuestion());
     }
 
     @Test
@@ -146,6 +169,105 @@ class AiAssistantServiceTest {
         assertEquals(1, response.getProducts().size());
         assertNotNull(response.getMessage());
         assertFalse(response.getMessage().isBlank());
+    }
+
+    @Test
+    void greetingReturnsNoProductsAndDoesNotSearch() {
+        AiAssistantResponse response = service.assist("Hola");
+
+        assertEquals("GREETING", response.getIntent());
+        assertTrue(response.getProducts().isEmpty());
+        assertFalse(response.getMessage().isBlank());
+        verifyNoInteractions(productSearchService, recommendationService, aiChatClient);
+    }
+
+    @Test
+    void smallTalkReturnsNoProductsAndDoesNotSearch() {
+        AiAssistantResponse response = service.assist("¿Cómo estás?");
+
+        assertEquals("SMALL_TALK", response.getIntent());
+        assertTrue(response.getProducts().isEmpty());
+        verifyNoInteractions(productSearchService, recommendationService, aiChatClient);
+    }
+
+    @Test
+    void thanksReturnsNoProductsAndDoesNotSearch() {
+        AiAssistantResponse response = service.assist("Gracias");
+
+        assertEquals("SMALL_TALK", response.getIntent());
+        assertTrue(response.getProducts().isEmpty());
+        verifyNoInteractions(productSearchService, recommendationService, aiChatClient);
+    }
+
+    @Test
+    void greetingWithProductSignalStillSearches() {
+        ProductDTO product = product(5);
+        when(aiChatClient.isEnabled()).thenReturn(false);
+        when(productSearchService.findCandidates(any())).thenReturn(List.of(product));
+        when(recommendationService.recommend(any(), any(), anyInt())).thenReturn(List.of(recommendation(product)));
+
+        AiAssistantResponse response = service.assist("hola, busco un anillo de plata");
+
+        assertEquals("PRODUCT_SEARCH", response.getIntent());
+        assertEquals(1, response.getProducts().size());
+    }
+
+    @Test
+    void followUpKeepsPreviousContext() {
+        when(aiChatClient.isEnabled()).thenReturn(false);
+        when(productSearchService.findCandidates(any())).thenReturn(List.of(product(5)));
+        when(recommendationService.recommend(any(), any(), anyInt()))
+                .thenReturn(List.of(recommendation(product(5))));
+
+        List<AiConversationTurn> history =
+                List.of(new AiConversationTurn("user", "busco un anillo de plata"));
+
+        AiAssistantResponse response = service.assist("y en oro?", history);
+
+        SearchIntent passed = capturedIntent();
+        assertEquals("anillo", passed.getCategory());
+        assertEquals("oro", passed.getMaterial());
+        assertEquals("PRODUCT_SEARCH", response.getIntent());
+    }
+
+    @Test
+    void cheaperFollowUpLowersBudgetFromContext() {
+        when(aiChatClient.isEnabled()).thenReturn(false);
+        when(productSearchService.findCandidates(any())).thenReturn(List.of(product(5)));
+        when(recommendationService.recommend(any(), any(), anyInt()))
+                .thenReturn(List.of(recommendation(product(5))));
+
+        List<AiConversationTurn> history =
+                List.of(new AiConversationTurn("user", "un anillo por menos de 300000"));
+
+        AiAssistantResponse response = service.assist("mas barato", history);
+
+        assertEquals(new BigDecimal("210000"), capturedIntent().getMaxPrice());
+        assertEquals("BUDGET_SEARCH", response.getIntent());
+    }
+
+    @Test
+    void topicChangeDoesNotCarryPreviousFilters() {
+        when(aiChatClient.isEnabled()).thenReturn(false);
+        when(productSearchService.findCandidates(any())).thenReturn(List.of(product(5)));
+        when(recommendationService.recommend(any(), any(), anyInt()))
+                .thenReturn(List.of(recommendation(product(5))));
+
+        List<AiConversationTurn> history =
+                List.of(new AiConversationTurn("user", "busco un anillo de plata por menos de 300000"));
+
+        service.assist("muestrame collares", history);
+
+        SearchIntent passed = capturedIntent();
+        assertEquals("collares", passed.getCategory());
+        assertNull(passed.getMaterial());
+        assertNull(passed.getMaxPrice());
+    }
+
+    private SearchIntent capturedIntent() {
+        ArgumentCaptor<SearchIntent> captor = ArgumentCaptor.forClass(SearchIntent.class);
+        verify(productSearchService, atLeastOnce()).findCandidates(captor.capture());
+        return captor.getValue();
     }
 
     @Test

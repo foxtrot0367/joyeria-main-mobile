@@ -22,7 +22,7 @@ describe('aiService', () => {
 
     const res = await aiService.ask('busco un regalo')
 
-    expect(mockedApi.post).toHaveBeenCalledWith('/ai/assistant', { message: 'busco un regalo' })
+    expect(mockedApi.post).toHaveBeenCalledWith('/ai/assistant', { message: 'busco un regalo', history: [] })
     expect(res.message).toBe('Te muestro algunas opciones.')
     expect(res.products).toHaveLength(1)
   })

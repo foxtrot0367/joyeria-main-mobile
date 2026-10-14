@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -72,6 +73,18 @@ class SearchIntentParserTest {
     }
 
     @Test
+    void keywordsExcludeStructuredTermsToAvoidDoubleScoring() {
+        SearchIntent intent = parser.parse("quiero un anillo de oro con grabado personalizado");
+
+        assertEquals("anillo", intent.getCategory());
+        assertEquals("oro", intent.getMaterial());
+        assertTrue(intent.getKeywords().contains("grabado"));
+        assertTrue(intent.getKeywords().contains("personalizado"));
+        assertFalse(intent.getKeywords().contains("anillo"));
+        assertFalse(intent.getKeywords().contains("oro"));
+    }
+
+    @Test
     void emptyMessageProducesEmptyIntent() {
         SearchIntent intent = parser.parse("   ");
 
@@ -79,6 +92,33 @@ class SearchIntentParserTest {
         assertNull(intent.getCategory());
         assertNull(intent.getMaxPrice());
         assertTrue(intent.getKeywords().isEmpty());
+    }
+
+    @Test
+    void bareSmallNumberIsNotTreatedAsBudget() {
+        SearchIntent intent = parser.parse("un anillo de plata 925");
+
+        assertNull(intent.getMaxPrice());
+        assertEquals("plata", intent.getMaterial());
+        assertEquals("anillo", intent.getCategory());
+    }
+
+    @Test
+    void bareLargeNumberIsTreatedAsBudget() {
+        SearchIntent intent = parser.parse("busco algo de 300000");
+
+        assertEquals(new BigDecimal("300000"), intent.getMaxPrice());
+    }
+
+    @Test
+    void mergeIgnoresNonPositiveAiPrice() {
+        SearchIntent base = parser.parse("plata");
+        SearchIntent ai = new SearchIntent();
+        ai.setMaxPrice(BigDecimal.ZERO);
+
+        SearchIntent merged = parser.merge(base, ai, Set.of("plata"), Set.of("plata"));
+
+        assertNull(merged.getMaxPrice());
     }
 
     @Test

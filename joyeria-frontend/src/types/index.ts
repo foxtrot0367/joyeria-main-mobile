@@ -266,9 +266,17 @@ export interface AiProductSuggestion {
   reason?: string
 }
 
+export interface AiConversationTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface AiAssistantResponse {
   message: string
+  intent?: string
   products: AiProductSuggestion[]
+  followUpQuestion?: string | null
+  suggestions?: string[]
 }
 
 export interface GiftFinderRequest {

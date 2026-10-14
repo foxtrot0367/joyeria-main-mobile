@@ -30,6 +30,7 @@ public class AiAssistantController {
     @PostMapping("/assistant")
     public ResponseEntity<ApiResponse<AiAssistantResponse>> assistant(
             @Valid @RequestBody AiAssistantRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(aiAssistantService.assist(request.getMessage())));
+        return ResponseEntity.ok(ApiResponse.success(
+                aiAssistantService.assist(request.getMessage(), request.getHistory())));
     }
 }

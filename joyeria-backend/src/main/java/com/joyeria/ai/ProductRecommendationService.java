@@ -17,9 +17,11 @@ import java.util.List;
  * +25 coincidencia de material
  * +20 dentro del presupuesto
  * +15 coincidencia de estilo
+ * +12 coincidencia de color
  * +10 disponibilidad
  *  +8 por palabra clave coincidente
  *  +6 coincidencia de ocasión
+ *  +4 intención de regalo
  * </pre>
  */
 @Service
@@ -29,6 +31,7 @@ public class ProductRecommendationService {
     private static final int SCORE_MATERIAL = 25;
     private static final int SCORE_BUDGET = 20;
     private static final int SCORE_STYLE = 15;
+    private static final int SCORE_COLOR = 12;
     private static final int SCORE_AVAILABILITY = 10;
     private static final int SCORE_KEYWORD = 8;
     private static final int SCORE_OCCASION = 6;
@@ -43,12 +46,39 @@ public class ProductRecommendationService {
         }
         List<Recommendation> scored = new ArrayList<>(candidates.size());
         for (ProductDTO product : candidates) {
+            if (!satisfiesConstraints(product, intent)) {
+                continue;
+            }
             scored.add(score(product, intent));
         }
         scored.sort(Comparator
                 .comparingInt(Recommendation::score).reversed()
                 .thenComparing(recommendation -> soldCount(recommendation.product()), Comparator.reverseOrder()));
         return scored.stream().limit(Math.max(1, limit)).toList();
+    }
+
+    /**
+     * Aplica los filtros explícitos del cliente como restricciones duras: ningún
+     * producto fuera de presupuesto o agotado (cuando se pidió disponibilidad)
+     * debe llegar a la respuesta, sin importar su puntuación.
+     */
+    private boolean satisfiesConstraints(ProductDTO product, SearchIntent intent) {
+        if (intent.getMaxPrice() != null) {
+            if (product.getPrice() == null || product.getPrice().compareTo(intent.getMaxPrice()) > 0) {
+                return false;
+            }
+        }
+        if (intent.getMinPrice() != null) {
+            if (product.getPrice() == null || product.getPrice().compareTo(intent.getMinPrice()) < 0) {
+                return false;
+            }
+        }
+        if (intent.isInStockOnly()) {
+            if (product.getStock() == null || product.getStock() <= 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Recommendation score(ProductDTO product, SearchIntent intent) {
@@ -71,6 +101,10 @@ public class ProductRecommendationService {
         if (intent.getStyle() != null && matches(intent.getStyle(), haystack)) {
             score += SCORE_STYLE;
             reasons.add(intent.getStyle());
+        }
+        if (intent.getColor() != null && matches(intent.getColor(), haystack)) {
+            score += SCORE_COLOR;
+            reasons.add("tono " + intent.getColor());
         }
         boolean available = product.getStock() != null && product.getStock() > 0;
         if (available) {

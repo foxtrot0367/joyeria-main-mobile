@@ -64,6 +64,13 @@ public class SearchIntentParser {
             "precios", "comprar", "buscando", "busque", "algun", "alguna", "alguno",
             "aqui", "esta", "este", "esos", "esas", "cual", "cuando", "donde");
 
+    /**
+     * Términos ya capturados como campos estructurados (categoría, material,
+     * color, estilo, ocasión o género). Se excluyen de las palabras clave para
+     * no duplicar su puntuación.
+     */
+    private static final Set<String> STRUCTURED_TERMS = buildStructuredTerms();
+
     private static final Pattern BETWEEN = Pattern.compile(
             "entre\\s+\\$?\\s*([\\d.,]+)\\s*(mil|millon(?:es)?|k)?\\s*(?:y|a)\\s*\\$?\\s*([\\d.,]+)\\s*(mil|millon(?:es)?|k)?");
 
@@ -77,6 +84,17 @@ public class SearchIntentParser {
 
     private static final Pattern ANY_PRICE = Pattern.compile(
             "\\$?\\s*([\\d][\\d.,]*)\\s*(mil|millon(?:es)?|k)?");
+
+    /**
+     * Monto mínimo para aceptar un número suelto (sin palabras de presupuesto)
+     * como tope de precio. Evita que cifras que no son dinero —como la pureza
+     * de la plata (925), el quilataje del oro (18k) o el tamaño— se interpreten
+     * como presupuesto.
+     */
+    private static final BigDecimal MIN_BARE_BUDGET = new BigDecimal("50000");
+
+    /** Cota superior de cordura para cualquier precio sugerido por la IA. */
+    private static final BigDecimal MAX_SANE_PRICE = new BigDecimal("1000000000");
 
     public SearchIntent parse(String rawMessage) {
         SearchIntent intent = new SearchIntent();
@@ -112,8 +130,8 @@ public class SearchIntentParser {
         SearchIntent out = new SearchIntent();
         out.setCategory(firstNonNull(validateAgainst(ai.getCategory(), knownCategories), base.getCategory()));
         out.setMaterial(firstNonNull(validateAgainst(ai.getMaterial(), knownMaterials), base.getMaterial()));
-        out.setMinPrice(firstNonNull(ai.getMinPrice(), base.getMinPrice()));
-        out.setMaxPrice(firstNonNull(ai.getMaxPrice(), base.getMaxPrice()));
+        out.setMinPrice(firstNonNull(sanitizePrice(ai.getMinPrice()), base.getMinPrice()));
+        out.setMaxPrice(firstNonNull(sanitizePrice(ai.getMaxPrice()), base.getMaxPrice()));
         out.setColor(firstNonNull(ai.getColor(), base.getColor()));
         out.setStyle(firstNonNull(ai.getStyle(), base.getStyle()));
         out.setOccasion(firstNonNull(ai.getOccasion(), base.getOccasion()));
@@ -146,7 +164,10 @@ public class SearchIntentParser {
         if (intent.getMaxPrice() == null && intent.getMinPrice() == null) {
             Matcher any = ANY_PRICE.matcher(norm);
             if (any.find()) {
-                intent.setMaxPrice(toAmount(any.group(1), any.group(2)));
+                BigDecimal amount = toAmount(any.group(1), any.group(2));
+                if (amount != null && amount.compareTo(MIN_BARE_BUDGET) >= 0) {
+                    intent.setMaxPrice(amount);
+                }
             }
         }
     }
@@ -194,7 +215,8 @@ public class SearchIntentParser {
     private Set<String> extractKeywords(String norm) {
         Set<String> keywords = new LinkedHashSet<>();
         for (String token : norm.split("[^a-z0-9]+")) {
-            if (token.length() < 3 || STOPWORDS.contains(token) || token.matches("\\d+")) {
+            if (token.length() < 3 || STOPWORDS.contains(token) || STRUCTURED_TERMS.contains(token)
+                    || token.matches("\\d+")) {
                 continue;
             }
             keywords.add(token);
@@ -203,6 +225,21 @@ public class SearchIntentParser {
             }
         }
         return keywords;
+    }
+
+    private static Set<String> buildStructuredTerms() {
+        Set<String> terms = new LinkedHashSet<>();
+        List<List<String>> lexicons = List.of(MATERIALS, CATEGORIES, COLORS, STYLES, OCCASIONS, MALE, FEMALE);
+        for (List<String> lexicon : lexicons) {
+            for (String entry : lexicon) {
+                for (String token : TextNormalizer.normalize(entry).split("[^a-z0-9]+")) {
+                    if (!token.isBlank()) {
+                        terms.add(token);
+                    }
+                }
+            }
+        }
+        return terms;
     }
 
     private String firstMatch(String norm, List<String> terms) {
@@ -243,5 +280,12 @@ public class SearchIntentParser {
 
     private BigDecimal firstNonNull(BigDecimal first, BigDecimal second) {
         return first != null ? first : second;
+    }
+
+    private BigDecimal sanitizePrice(BigDecimal value) {
+        if (value == null || value.signum() <= 0 || value.compareTo(MAX_SANE_PRICE) > 0) {
+            return null;
+        }
+        return value;
     }
 }

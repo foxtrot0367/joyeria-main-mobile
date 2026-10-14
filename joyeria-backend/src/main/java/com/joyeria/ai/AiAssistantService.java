@@ -3,6 +3,7 @@ package com.joyeria.ai;
 import com.joyeria.ai.client.AiChatClient;
 import com.joyeria.ai.config.AiProperties;
 import com.joyeria.ai.dto.AiAssistantResponse;
+import com.joyeria.ai.dto.AiConversationTurn;
 import com.joyeria.ai.dto.AiProductSuggestion;
 import com.joyeria.dto.ProductDTO;
 import com.joyeria.model.Category;
@@ -34,7 +35,10 @@ import java.util.stream.Collectors;
 public class AiAssistantService {
 
     private final AiProperties properties;
+    private final IntentClassifier intentClassifier;
     private final SearchIntentParser intentParser;
+    private final ConversationContextResolver conversationContextResolver;
+    private final AssistantSuggestions assistantSuggestions;
     private final ProductSearchService productSearchService;
     private final ProductRecommendationService recommendationService;
     private final AiChatClient aiChatClient;
@@ -42,6 +46,10 @@ public class AiAssistantService {
     private final MaterialRepository materialRepository;
 
     public AiAssistantResponse assist(String rawMessage) {
+        return assist(rawMessage, List.of());
+    }
+
+    public AiAssistantResponse assist(String rawMessage, List<AiConversationTurn> history) {
         String message = rawMessage == null ? "" : rawMessage.trim();
         if (message.isEmpty()) {
             throw new IllegalArgumentException("El mensaje no puede estar vacío");
@@ -51,7 +59,22 @@ public class AiAssistantService {
                     "El mensaje es demasiado largo (máximo " + properties.getMaxMessageLength() + " caracteres)");
         }
 
-        SearchIntent intent = intentParser.parse(message);
+        SearchIntent baseIntent = intentParser.parse(message);
+        AiIntent baseAiIntent = intentClassifier.classify(message, baseIntent);
+
+        if (intentClassifier.isConversational(baseAiIntent)) {
+            return AiAssistantResponse.builder()
+                    .intent(baseAiIntent.name())
+                    .message(conversationalMessage(baseAiIntent, message))
+                    .products(List.of())
+                    .followUpQuestion(assistantSuggestions.followUpQuestion(baseAiIntent, baseIntent, false))
+                    .suggestions(assistantSuggestions.suggestions(baseAiIntent, baseIntent, false))
+                    .build();
+        }
+
+        SearchIntent intent = conversationContextResolver.enrich(baseIntent, message, history);
+        AiIntent aiIntent = intentClassifier.classify(message, intent);
+
         List<ProductDTO> candidates = productSearchService.findCandidates(intent);
 
         if (aiChatClient.isEnabled()) {
@@ -67,10 +90,35 @@ public class AiAssistantService {
                 .toList();
 
         String responseMessage = resolveMessage(message, intent, recommendations);
+        boolean hasProducts = !recommendations.isEmpty();
         return AiAssistantResponse.builder()
+                .intent(aiIntent.name())
                 .message(responseMessage)
                 .products(suggestions)
+                .followUpQuestion(assistantSuggestions.followUpQuestion(aiIntent, intent, hasProducts))
+                .suggestions(assistantSuggestions.suggestions(aiIntent, intent, hasProducts))
                 .build();
+    }
+
+    /**
+     * Respuesta para intenciones puramente conversacionales. Nunca consulta el
+     * catálogo ni muestra tarjetas.
+     */
+    private String conversationalMessage(AiIntent intent, String message) {
+        return switch (intent) {
+            case GREETING -> "¡Hola! 😊 Soy AURA, tu asistente de joyería. "
+                    + "¿En qué puedo ayudarte hoy? Si buscas un regalo o una joya especial, cuéntame.";
+            case SMALL_TALK -> intentClassifier.isThankYou(message)
+                    ? "¡Con gusto! 💛 Me alegra poder ayudarte. "
+                            + "¿Quieres que te muestre alguna joya o tienes otra pregunta?"
+                    : "¡Muy bien, gracias por preguntar! 😊 Estoy aquí para ayudarte a encontrar la joya perfecta. "
+                            + "¿Buscas algo en particular?";
+            case CATALOG_QUESTION -> "¡Claro! 💛 Puedo ayudarte a explorar anillos, collares, pulseras, aretes, "
+                    + "dijes y sets, en oro, plata y otros materiales. ¿Qué tipo de joya te interesa?";
+            case OUT_OF_SCOPE -> "Puedo ayudarte sobre todo con joyería 💛. "
+                    + "¿Buscas un anillo, un regalo, algo en plata…? Cuéntame y te muestro opciones reales.";
+            default -> "¿En qué puedo ayudarte?";
+        };
     }
 
     private SearchIntent refineWithAi(String message, SearchIntent deterministic) {
@@ -112,9 +160,9 @@ public class AiAssistantService {
 
     private String defaultMessage(List<ProductRecommendationService.Recommendation> recommendations) {
         if (recommendations.isEmpty()) {
-            return "No encontré productos que coincidan con tu búsqueda. Puedes explorar nuestro catálogo completo.";
+            return "No encontré productos que coincidan con tu búsqueda. Prueba con otras palabras o explora nuestro catálogo completo.";
         }
-        return "El asistente no está disponible en este momento, pero encontré algunas opciones que podrían interesarte.";
+        return "Encontré estas opciones que podrían interesarte.";
     }
 
     private Map<String, Object> productPayload(ProductDTO product) {

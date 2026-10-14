@@ -76,6 +76,51 @@ class ProductRecommendationServiceTest {
     }
 
     @Test
+    void excludesProductsOverBudget() {
+        ProductDTO expensive = product(1, "Anillo Lujo", "Anillos", List.of("Oro"), "850000", 5, "x");
+        SearchIntent intent = SearchIntent.builder().maxPrice(new BigDecimal("400000")).build();
+
+        assertTrue(service.recommend(List.of(expensive), intent, 3).isEmpty());
+    }
+
+    @Test
+    void excludesProductsBelowMinPrice() {
+        ProductDTO cheap = product(1, "Anillo Basico", "Anillos", List.of("Plata"), "50000", 5, "x");
+        SearchIntent intent = SearchIntent.builder().minPrice(new BigDecimal("100000")).build();
+
+        assertTrue(service.recommend(List.of(cheap), intent, 3).isEmpty());
+    }
+
+    @Test
+    void inStockOnlyExcludesOutOfStockProducts() {
+        ProductDTO available = product(1, "Anillo", "Anillos", List.of("Plata"), "150000", 4, "x");
+        ProductDTO outOfStock = product(2, "Anillo", "Anillos", List.of("Plata"), "150000", 0, "x");
+        SearchIntent intent = SearchIntent.builder().inStockOnly(true).build();
+
+        List<ProductRecommendationService.Recommendation> result =
+                service.recommend(List.of(outOfStock, available), intent, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).product().getId());
+    }
+
+    @Test
+    void appliesBudgetAndMaterialTogether() {
+        ProductDTO okPlata = product(1, "Anillo Plata", "Anillos", List.of("Plata"), "200000", 5, "x");
+        ProductDTO overBudgetPlata = product(2, "Anillo Plata Lujo", "Anillos", List.of("Plata"), "900000", 5, "x");
+        SearchIntent intent = SearchIntent.builder()
+                .material("plata")
+                .maxPrice(new BigDecimal("400000"))
+                .build();
+
+        List<ProductRecommendationService.Recommendation> result =
+                service.recommend(List.of(overBudgetPlata, okPlata), intent, 5);
+
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).product().getId());
+    }
+
+    @Test
     void giftIntentProducesGiftReason() {
         ProductDTO product = product(1, "Pulsera", "Pulseras", List.of("Plata"), "90000", 4, "x");
 
@@ -84,5 +129,31 @@ class ProductRecommendationServiceTest {
 
         assertTrue(recommendation.reason().toLowerCase().contains("regalar"));
         assertFalse(recommendation.reason().isBlank());
+    }
+
+    @Test
+    void colorMatchRanksHigher() {
+        ProductDTO dorado = coloredProduct(1, "Dorado");
+        ProductDTO plateado = coloredProduct(2, "Plateado");
+
+        List<ProductRecommendationService.Recommendation> result = service.recommend(
+                List.of(plateado, dorado), SearchIntent.builder().color("dorado").build(), 2);
+
+        assertEquals(1L, result.get(0).product().getId());
+        assertTrue(result.get(0).score() > result.get(1).score());
+    }
+
+    private ProductDTO coloredProduct(long id, String color) {
+        return ProductDTO.builder()
+                .id(id)
+                .name("Anillo " + color)
+                .categoryName("Anillos")
+                .materialNames(List.of("Plata"))
+                .price(new BigDecimal("150000"))
+                .stock(5)
+                .soldCount(0)
+                .color(color)
+                .description("Anillo")
+                .build();
     }
 }

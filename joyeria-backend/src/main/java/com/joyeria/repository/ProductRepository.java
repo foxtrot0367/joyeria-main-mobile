@@ -47,7 +47,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.active = true AND " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
-           "(:materialId IS NULL OR :materialId MEMBER OF p.materials) AND " +
+           "(:materialId IS NULL OR EXISTS (SELECT 1 FROM p.materials m WHERE m.id = :materialId)) AND " +
            "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
            "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
            "(:color = '' OR LOWER(p.color) = LOWER(:color)) AND " +
@@ -67,7 +67,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
            "LOWER(p.sku) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(p.color) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
-           "(:materialId IS NULL OR :materialId MEMBER OF p.materials) AND " +
+           "(:materialId IS NULL OR EXISTS (SELECT 1 FROM p.materials m WHERE m.id = :materialId)) AND " +
            "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
            "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
            "(:color = '' OR LOWER(p.color) = LOWER(:color)) AND " +
